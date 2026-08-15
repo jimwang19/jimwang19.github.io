@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>楼宇智诊 · 建筑智慧运维 AI 助手</title>
+<meta name="description" content="楼宇智诊：建筑智慧运维 AI 助手 —— 对话式诊断、plan-and-execute 编排、IoT MCP 工具生态，报修到派单分钟级闭环。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1526'/%3E%3Cpath d='M7 25 V12 h6 v13 M15 25 V7 h7 v18 M24 25 v-9 h4 v9' stroke='%2338bdf8' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M6 28 h20' stroke='%232dd4bf' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #070b14;
+    --bg-2: #0d1526;
+    --bg-3: #111c33;
+    --line: #1e2a44;
+    --line-soft: #16213a;
+    --text: #e6edf7;
+    --muted: #8b98b3;
+    --faint: #5b6880;
+    --accent: #38bdf8;
+    --accent-2: #2dd4bf;
+    --accent-3: #818cf8;
+    --warn: #f59e0b;
+    --danger: #fb7185;
+    --ok: #34d399;
+    --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(56,189,248,.08), transparent 42%),
+      radial-gradient(circle at 82% 88%, rgba(129,140,248,.08), transparent 42%),
+      linear-gradient(rgba(30,42,68,.20) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,42,68,.20) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    pointer-events: none;
+  }
+  .wrap { position: relative; z-index: 1; }
+
+  /* ====== Nav ====== */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 56px; display: flex; align-items: center; gap: 20px;
+    padding: 0 32px;
+    background: rgba(7,11,20,.82); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .nav-logo .mark {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-3));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-logo .mark svg { display: block; }
+  .nav-logo .sub { font-size: 11px; color: var(--faint); font-weight: 400; }
+  .nav-sp { flex: 1; }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 13.5px; transition: .2s; }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ====== Hero ====== */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 100px 72px 60px;
+    background:
+      linear-gradient(100deg, rgba(7,11,20,.96) 0%, rgba(7,11,20,.88) 40%, rgba(7,11,20,.50) 100%),
+      url('images/cover.svg') center/cover no-repeat;
+    position: relative;
+  }
+  .kicker {
+    font-size: 13px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 18px;
+  }
+  .kicker::before { content: "◆ "; color: var(--accent-2); }
+  .hero h1 { font-size: 56px; line-height: 1.12; font-weight: 700; letter-spacing: .01em; }
+  .hero h1 .accent { color: var(--accent); }
+  .hero .lead { font-size: 20px; color: var(--muted); line-height: 1.7; margin-top: 22px; max-width: 680px; }
+  .hero .lead b { color: var(--accent-2); font-weight: 600; }
+  .hero-tags { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+  .tag {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    padding: 5px 14px; border-radius: 20px;
+  }
+  .tag.cyan { background: rgba(56,189,248,.14); color: var(--accent); border: 1px solid rgba(56,189,248,.35); }
+  .tag.teal { background: rgba(45,212,191,.14); color: var(--accent-2); border: 1px solid rgba(45,212,191,.35); }
+  .tag.indigo { background: rgba(129,140,248,.14); color: var(--accent-3); border: 1px solid rgba(129,140,248,.35); }
+  .tag.amber { background: rgba(245,158,11,.14); color: var(--warn); border: 1px solid rgba(245,158,11,.35); }
+
+  .hero-cta { display: flex; gap: 16px; margin-top: 44px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 32px; border-radius: 12px; font-size: 15px; font-weight: 600;
+    text-decoration: none; cursor: pointer; transition: .2s; border: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #0ea5e9, #0891b2); color: #fff;
+    box-shadow: 0 4px 24px -4px rgba(14,165,233,.5);
+  }
+  .btn-primary:hover { filter: brightness(1.15); transform: translateY(-2px); }
+  .btn-ghost {
+    background: var(--bg-3); color: var(--text); border: 1px solid var(--line);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .scroll-hint {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    color: var(--faint); font-size: 12px; letter-spacing: .15em;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .scroll-hint .line { width: 1px; height: 32px; background: linear-gradient(var(--accent), transparent); animation: scrollPulse 2s ease infinite; }
+  @keyframes scrollPulse { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+  /* ====== Section common ====== */
+  section.block { padding: 80px 72px; }
+  .block-kicker {
+    font-size: 13px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--accent-2); font-weight: 600; margin-bottom: 14px;
+  }
+  .block-kicker::before { content: "◆ "; color: var(--accent); }
+  .block h2 { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+  .block h2 .accent { color: var(--accent); }
+  .block .desc { font-size: 17px; color: var(--muted); line-height: 1.7; max-width: 860px; margin-bottom: 40px; }
+
+  /* ====== Entry cards ====== */
+  .entries { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .entry {
+    background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+    border: 1px solid var(--line); border-radius: 18px;
+    padding: 36px 32px; position: relative; overflow: hidden;
+    text-decoration: none; color: inherit; transition: .3s;
+    display: flex; flex-direction: column; min-height: 300px;
+  }
+  .entry:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 40px -8px rgba(56,189,248,.2); }
+  .entry::after {
+    content: ""; position: absolute; top: 0; right: 0; width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(56,189,248,.06), transparent 70%);
+    pointer-events: none;
+  }
+  .entry .num { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: .1em; margin-bottom: 16px; }
+  .entry h3 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+  .entry .e-desc { font-size: 15px; color: var(--muted); line-height: 1.7; flex: 1; }
+  .entry .e-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .entry .e-go {
+    margin-top: 24px; display: inline-flex; align-items: center; gap: 8px;
+    color: var(--accent); font-size: 14px; font-weight: 600;
+  }
+  .entry .e-go .arrow { transition: transform .2s; }
+  .entry:hover .e-go .arrow { transform: translateX(4px); }
+
+  /* ====== Value stats ====== */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .stat-card {
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 28px 24px; text-align: center;
+  }
+  .stat-card b { display: block; font-size: 36px; font-weight: 800; line-height: 1.1; }
+  .stat-card span { font-size: 14px; color: var(--muted); margin-top: 8px; display: block; }
+  .stat-card.cyan b { color: var(--accent); }
+  .stat-card.teal b { color: var(--accent-2); }
+  .stat-card.indigo b { color: var(--accent-3); }
+  .stat-card.amber b { color: var(--warn); }
+
+  /* ====== Architecture ====== */
+  .arch { display: flex; flex-direction: column; gap: 16px; }
+  .arch-layer {
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px;
+    padding: 24px 28px; display: flex; align-items: center; gap: 24px;
+    position: relative; overflow: hidden;
+  }
+  .arch-layer .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; }
+  .arch-layer.l1 .bar { background: var(--accent); }
+  .arch-layer.l2 .bar { background: var(--accent-2); }
+  .arch-layer.l3 .bar { background: var(--accent-3); }
+  .arch-layer .l-title { font-size: 16px; font-weight: 700; min-width: 280px; }
+  .arch-layer.l1 .l-title { color: var(--accent); }
+  .arch-layer.l2 .l-title { color: var(--accent-2); }
+  .arch-layer.l3 .l-title { color: var(--accent-3); }
+  .arch-layer .l-desc { font-size: 14px; color: var(--muted); line-height: 1.6; flex: 1; }
+  .arch-layer .l-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .arch-layer .l-chips span {
+    font-size: 12px; padding: 4px 12px; border-radius: 20px;
+    background: var(--bg-3); border: 1px solid var(--line); color: var(--text);
+  }
+  .arch-arrows { text-align: center; color: var(--faint); font-size: 12px; padding: 2px 0; }
+
+  /* ====== Advantage ====== */
+  .advantage { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .adv-card {
+    background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 28px 26px; position: relative;
+  }
+  .adv-card .num { font-size: 42px; font-weight: 800; line-height: 1; }
+  .adv-card.cyan .num { color: var(--accent); }
+  .adv-card.teal .num { color: var(--accent-2); }
+  .adv-card.indigo .num { color: var(--accent-3); }
+  .adv-card h3 { font-size: 18px; font-weight: 600; margin-top: 14px; }
+  .adv-card p { font-size: 14px; color: var(--muted); line-height: 1.65; margin-top: 10px; }
+  .adv-card .adv-tags { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+  .adv-card .adv-tags span { font-size: 13px; color: var(--faint); line-height: 1.6; display: block; }
+
+  /* ====== Footer ====== */
+  footer {
+    padding: 40px 72px; text-align: center;
+    border-top: 1px solid var(--line); color: var(--faint); font-size: 13px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ====== Responsive ====== */
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { padding: 80px 24px 60px; }
+    .hero h1 { font-size: 36px; }
+    .hero .lead { font-size: 16px; }
+    section.block { padding: 60px 24px; }
+    .block h2 { font-size: 26px; }
+    .entries, .stats, .advantage { grid-template-columns: 1fr; }
+    .arch-layer { flex-direction: column; align-items: flex-start; }
+    .arch-layer .l-title { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ===== Nav ===== -->
+<nav>
+  <div class="nav-logo">
+    <span class="mark"><svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M7 25 V12 h6 v13 M15 25 V7 h7 v18 M24 25 v-9 h4 v9" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><path d="M5 28 h22" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/></svg></span>
+    楼宇智诊 <span class="sub">SmartBuilding Diagnoser</span>
+  </div>
+  <div class="nav-sp"></div>
+  <div class="nav-links">
+    <a href="#overview">概述</a>
+    <a href="#entries">演示</a>
+    <a href="#value">价值</a>
+    <a href="#architecture">架构</a>
+    <a href="#advantage">壁垒</a>
+  </div>
+</nav>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="overview">
+  <div class="kicker">建筑智慧运维 · AI Agent 解决方案</div>
+  <h1>楼宇智诊<br><span class="accent">建筑运维 AI 助手</span></h1>
+  <p class="lead">
+    让建筑运维从「看数据」进化到「<b>问数据 + 让它干活</b>」——
+    用一句话，完成 定位 → 诊断 → 建议 → 派单 → 报告 的闭环。
+  </p>
+  <div class="hero-tags">
+    <span class="tag cyan">对话式诊断</span>
+    <span class="tag teal">plan-and-execute 编排</span>
+    <span class="tag indigo">IoT MCP 工具生态</span>
+    <span class="tag amber">26 年工程经验 × AI</span>
+  </div>
+  <div class="hero-cta">
+    <a href="product-prototype.html" class="btn btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+      体验产品原型
+    </a>
+    <a href="product-pitch-deck.html" class="btn btn-ghost">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+      查看立项提案
+    </a>
+  </div>
+  <div class="scroll-hint">
+    <span>向下滚动</span>
+    <div class="line"></div>
+  </div>
+</section>
+
+<!-- ===== Entries ===== -->
+<section class="block" id="entries">
+  <div class="block-kicker">演示与文档</div>
+  <h2>两个入口，<span class="accent">看懂 + 体验</span></h2>
+  <p class="desc">立项提案用 14 页幻灯片讲清楚"为什么做、怎么做、凭什么是我们"；产品原型用可交互的对话 × 工作台演示真实诊断流程。</p>
+  <div class="entries">
+    <a href="product-pitch-deck.html" class="entry">
+      <div class="num">01 · PITCH DECK</div>
+      <h3>立项提案（14 页幻灯片）</h3>
+      <p class="e-desc">从行业痛点到架构设计，从核心机制到市场格局与分阶段落地。涵盖：传统运维三大痛点、三层架构（交互·编排·接口）、plan-and-execute 鉴别诊断循环、旗舰场景全链路、价值指标、竞争壁垒。支持键盘翻页、全屏、触屏滑动。</p>
+      <div class="e-tags">
+        <span class="tag cyan">14 页幻灯片</span>
+        <span class="tag teal">架构设计</span>
+        <span class="tag indigo">市场分析</span>
+      </div>
+      <div class="e-go">打开提案 <span class="arrow">→</span></div>
+    </a>
+    <a href="product-prototype.html" class="entry">
+      <div class="num">02 · PROTOTYPE</div>
+      <h3>产品原型（对话 × 工作台）</h3>
+      <p class="e-desc">模拟"3 楼会议室太热了"报修场景，Agent 自主完成：意图澄清 → 设备定位 → 趋势分析 → 告警收敛 → 案例匹配 → 诊断报告 → 工单生成。左侧对话叙事流 + 右侧实时产物流，自动演示 + 手动单步控制。</p>
+      <div class="e-tags">
+        <span class="tag cyan">可交互演示</span>
+        <span class="tag teal">对话 + 工作台</span>
+        <span class="tag amber">端到端闭环</span>
+      </div>
+      <div class="e-go">体验原型 <span class="arrow">→</span></div>
+    </a>
+  </div>
+</section>
+
+<!-- ===== Value ===== -->
+<section class="block" id="value">
+  <div class="block-kicker">价值主张</div>
+  <h2>三个视角，都能拿到<span class="accent">可量化</span>的回报</h2>
+  <p class="desc">对运维人员：AI 先诊断，人到场即修，有证据链不怕背锅。对管理层：报修分钟级响应，无效工单下降，全程留痕可审计。对组织：老专家排查逻辑编码进系统，新人即战力。</p>
+  <div class="stats">
+    <div class="stat-card cyan"><b>10×</b><span>报告 1h → 30s 初稿</span></div>
+    <div class="stat-card teal"><b>↓ 误派单</b><span>假告警不再派工</span></div>
+    <div class="stat-card indigo"><b>7×24</b><span>全量设备不间断</span></div>
+    <div class="stat-card amber"><b>可追溯</b><span>每步有数据依据</span></div>
+  </div>
+</section>
+
+<!-- ===== Architecture ===== -->
+<section class="block" id="architecture">
+  <div class="block-kicker">三层架构</div>
+  <h2>交互 · 编排 · 接口 <span class="accent">相互印证</span></h2>
+  <p class="desc">接口层站在开放生态上：MCP 已成 Agent 工具接入事实标准（Anthropic 发布、2025 年捐入 Linux Foundation，OpenAI / Google / 微软均已采纳）。三层之间双向可追溯——正向无悬空，反向无冗余。</p>
+  <div class="arch">
+    <div class="arch-layer l1">
+      <div class="bar"></div>
+      <div class="l-title">第一层 · 交互功能</div>
+      <div class="l-desc">面向用户的对话式交互：模糊澄清、诊断、巡检、能碳、知识、派单、报告</div>
+      <div class="l-chips"><span>"太热了"</span><span>"查告警"</span><span>"帮我诊断"</span><span>"出报告"</span></div>
+    </div>
+    <div class="arch-arrows">↓ 需要哪些能力？　　↑ 兑现哪些功能？</div>
+    <div class="arch-layer l2">
+      <div class="bar"></div>
+      <div class="l-title">第二层 · Agent 编排推理</div>
+      <div class="l-desc">LangGraph · plan-and-execute：planner 初诊 → executor 开检查单 → replan 复诊换假设 → 高危审批 → 证据链</div>
+      <div class="l-chips"><span>planner</span><span>executor</span><span>replan</span><span>高危审批</span><span>证据链</span></div>
+    </div>
+    <div class="arch-arrows">↓ 依赖哪些接口？　　↑ 支撑哪些能力？</div>
+    <div class="arch-layer l3">
+      <div class="bar"></div>
+      <div class="l-title">第三层 · 基础接口（MCP）</div>
+      <div class="l-desc">IoT 智慧运维基础服务：空间树、设备台账、点位/历史、告警收敛、知识库、工单/控制（审批）</div>
+      <div class="l-chips"><span>get_space_tree</span><span>list_devices</span><span>query_points</span><span>get_root_alarm</span><span>search_kb</span><span>create_ticket</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Advantage ===== -->
+<section class="block" id="advantage">
+  <div class="block-kicker">竞争壁垒</div>
+  <h2>为什么是<span class="accent">我们</span>？</h2>
+  <p class="desc">懂 AI 的人不熟建筑运维，熟建筑运维的人不懂 AI —— 两个都深的，极少。26 年工程经验 × IoT 领域深度 × AI 落地能力，构成交叉蓝海中的不可替代性。</p>
+  <div class="advantage">
+    <div class="adv-card cyan">
+      <div class="num">26</div>
+      <h3>年工程经验</h3>
+      <p>IoT + 建筑 + 安防 + 企业应用，跨领域理解力是"翻译 + 落地"的底子。</p>
+      <div class="adv-tags"><span>已落地：安防分布式平台 · IoT 10万+设备 · 3D家装后台</span></div>
+    </div>
+    <div class="adv-card teal">
+      <div class="num">×</div>
+      <h3>IoT 领域深度</h3>
+      <p>设备接入、时序数据、告警链路、巡检机器人、能碳管理——闭着眼能讲清设备数据怎么查、控制怎么下发。</p>
+      <div class="adv-tags"><span>核心能力：时序数据查询 · 告警收敛 · 空间下钻 · 控制下发</span></div>
+    </div>
+    <div class="adv-card indigo">
+      <div class="num">AI</div>
+      <h3>AI 落地能力</h3>
+      <p>LangGraph + plan-and-execute + MCP，把运维经验编码进编排逻辑，而不是靠 LLM 猜。</p>
+      <div class="adv-tags"><span>已落地：RAG知识库 · AI视频流水线 · 能碳管理小程序</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+  <p>楼宇智诊 · 建筑智慧运维 AI 助手 &nbsp;|&nbsp; Jim · 2026</p>
+  <p style="margin-top:8px;">本站为产品演示，数据均为模拟 · <a href="product-pitch-deck.html">查看立项提案</a> · <a href="product-prototype.html">体验产品原型</a></p>
+</footer>
+
+</div>
+</body>
+</html>

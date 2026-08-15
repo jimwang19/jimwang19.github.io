@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>楼宇智诊 · 建筑智慧运维 AI 助手 — 立项提案</title>
+<meta name="description" content="楼宇智诊：建筑智慧运维 AI 助手立项提案 —— 对话式诊断、plan-and-execute 编排、IoT MCP 工具生态，报修到派单分钟级闭环。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1526'/%3E%3Cpath d='M7 25 V12 h6 v13 M15 25 V7 h7 v18 M24 25 v-9 h4 v9' stroke='%2338bdf8' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M6 28 h20' stroke='%232dd4bf' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="images/cover.svg">
+<style>
+  :root {
+    --bg: #070b14;
+    --bg-2: #0d1526;
+    --bg-3: #111c33;
+    --line: #1e2a44;
+    --line-soft: #16213a;
+    --text: #e6edf7;
+    --muted: #8b98b3;
+    --faint: #5b6880;
+    --accent: #38bdf8;   /* cyan */
+    --accent-2: #2dd4bf; /* teal */
+    --accent-3: #818cf8; /* indigo */
+    --warn: #f59e0b;
+    --danger: #fb7185;
+    --ok: #34d399;
+    --glow: 0 0 0 1px rgba(56,189,248,.35), 0 0 24px rgba(56,189,248,.18);
+    --font: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* 深色科技网格背景 */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(56,189,248,.10), transparent 42%),
+      radial-gradient(circle at 82% 88%, rgba(129,140,248,.10), transparent 42%),
+      linear-gradient(rgba(30,42,68,.35) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30,42,68,.35) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 44px 44px, 44px 44px;
+    z-index: 0;
+  }
+
+  .deck { position: relative; z-index: 1; width: 100%; height: 100%; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 52px 72px;
+    opacity: 0; visibility: hidden;
+    transition: opacity .45s ease, transform .45s ease;
+    transform: translateX(28px);
+  }
+  .slide.active { opacity: 1; visibility: visible; transform: translateX(0); }
+
+  .kicker {
+    font-size: 13px; letter-spacing: .32em; text-transform: uppercase;
+    color: var(--accent); font-weight: 600; margin-bottom: 18px;
+  }
+  .kicker::before { content: "◆ "; color: var(--accent-2); }
+  h1 { font-size: 52px; line-height: 1.16; font-weight: 700; letter-spacing: .01em; }
+  h2 { font-size: 34px; line-height: 1.2; font-weight: 700; margin-bottom: 18px; }
+  h2 .accent { color: var(--accent); }
+  h3 { font-size: 19px; font-weight: 600; color: var(--text); }
+  .lead { font-size: 19px; color: var(--muted); line-height: 1.7; }
+  .sub { font-size: 15px; color: var(--faint); }
+  .grow { flex: 1; }
+
+  .grid { display: grid; gap: 22px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card.accent { border-color: rgba(56,189,248,.45); box-shadow: var(--glow); }
+  .card.teal { border-color: rgba(45,212,191,.4); }
+  .card.indigo { border-color: rgba(129,140,248,.4); }
+  .card .tag {
+    display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    padding: 3px 10px; border-radius: 20px; margin-bottom: 14px;
+  }
+  .tag.cyan { background: rgba(56,189,248,.14); color: var(--accent); border: 1px solid rgba(56,189,248,.35); }
+  .tag.teal { background: rgba(45,212,191,.14); color: var(--accent-2); border: 1px solid rgba(45,212,191,.35); }
+  .tag.indigo { background: rgba(129,140,248,.14); color: var(--accent-3); border: 1px solid rgba(129,140,248,.35); }
+  .tag.amber { background: rgba(245,158,11,.14); color: var(--warn); border: 1px solid rgba(245,158,11,.35); }
+  .tag.rose { background: rgba(251,113,133,.14); color: var(--danger); border: 1px solid rgba(251,113,133,.35); }
+
+  .num { font-size: 40px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .num.teal { color: var(--accent-2); }
+  .num.indigo { color: var(--accent-3); }
+  .num.amber { color: var(--warn); }
+
+  .stat { text-align: center; }
+  .stat b { display: block; font-size: 40px; font-weight: 800; line-height: 1.1; }
+  .stat span { font-size: 14px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; letter-spacing: .05em; }
+  td code, .mono { font-family: var(--mono); font-size: 13px; color: var(--accent-2); }
+
+  .foot {
+    position: absolute; bottom: 26px; left: 72px; right: 72px;
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--faint); font-size: 12.5px;
+  }
+  .page-dots { display: flex; gap: 7px; }
+  .page-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line); display: inline-block; cursor: pointer; transition: background .2s; }
+  .page-dots i.on { background: var(--accent); box-shadow: 0 0 8px rgba(56,189,248,.8); }
+
+  .arrow-hint { position: absolute; right: 26px; bottom: 22px; color: var(--faint); font-size: 12px; letter-spacing: .1em; }
+  .logo {
+    position: absolute; top: 30px; right: 72px;
+    font-size: 14px; letter-spacing: .18em; color: var(--faint); font-weight: 600;
+  }
+  .logo b { color: var(--accent); }
+
+  /* SVG 通用 */
+  svg text { font-family: var(--font); }
+  .glow-line { filter: drop-shadow(0 0 6px rgba(56,189,248,.55)); }
+
+  /* 生成图背景：封面用 cover.svg，概念页用对应概念图；图缺失时自动回退为纯深色渐变 */
+  .slide.cover {
+    background:
+      linear-gradient(100deg, rgba(7,11,20,.95) 0%, rgba(7,11,20,.86) 40%, rgba(7,11,20,.42) 100%),
+      url('images/cover.svg') center/cover no-repeat;
+  }
+  .slide.ambient-layers {
+    background:
+      linear-gradient(rgba(7,11,20,.86), rgba(7,11,20,.90)),
+      url('images/concept_layers.svg') center/cover no-repeat;
+  }
+  .slide.ambient-loop {
+    background:
+      linear-gradient(rgba(7,11,20,.86), rgba(7,11,20,.90)),
+      url('images/concept_loop.svg') center/cover no-repeat;
+  }
+  .slide.ambient-market {
+    background:
+      linear-gradient(rgba(7,11,20,.88), rgba(7,11,20,.92)),
+      url('images/market.svg') center/cover no-repeat;
+  }
+  .slide.end {
+    background:
+      linear-gradient(rgba(7,11,20,.90), rgba(7,11,20,.93)),
+      url('images/cover.svg') center/cover no-repeat;
+  }
+
+  /* 卡片角标图标 */
+  .card .ico { position: absolute; top: 18px; right: 20px; opacity: .9; }
+
+  /* 聊天 mockup */
+  .chat { background: var(--bg-2); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 14px; height: 100%; }
+  .chat .head { font-size: 13px; color: var(--muted); padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; gap: 8px; }
+  .bubble { max-width: 82%; padding: 12px 15px; border-radius: 12px; font-size: 14.5px; line-height: 1.6; }
+  .bubble.user { align-self: flex-end; background: rgba(56,189,248,.16); border: 1px solid rgba(56,189,248,.35); border-bottom-right-radius: 3px; }
+  .bubble.ai { align-self: flex-start; background: var(--bg-3); border: 1px solid var(--line); border-bottom-left-radius: 3px; }
+  .bubble.ai .who { display: block; font-size: 11.5px; color: var(--accent-2); margin-bottom: 4px; letter-spacing: .05em; }
+  .bubble .think { color: var(--muted); font-size: 13px; }
+
+  /* 趋势图 */
+  .axis { stroke: var(--line); stroke-width: 1; }
+  .gridline { stroke: var(--line-soft); stroke-width: 1; stroke-dasharray: 3 4; }
+
+  .card.rose { border-color: rgba(251,113,133,.4); }
+  .card.amber { border-color: rgba(245,158,11,.4); }
+
+  /* 顶部播放进度条 */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0; z-index: 60;
+    background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    box-shadow: 0 0 10px rgba(56,189,248,.6);
+    transition: width .35s ease;
+  }
+
+  @media (max-width: 900px) {
+    .slide { padding: 34px 34px; }
+    h1 { font-size: 36px; } h2 { font-size: 26px; }
+    .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+    .logo { right: 34px; }
+    .foot { left: 34px; right: 34px; }
+  }
+
+  /* 打印 / 导出 PDF：所有页平铺，每页一张 */
+  @media print {
+    body { overflow: visible; }
+    body::before { display: none; }
+    #progress, .page-dots, .arrow-hint { display: none !important; }
+    .slide {
+      position: relative; inset: auto;
+      opacity: 1; visibility: visible; transform: none;
+      height: 100vh; page-break-after: always; break-inside: avoid;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="deck" id="deck">
+
+  <!-- ============ 1 封面 ============ -->
+  <section class="slide active cover">
+    <div class="logo"><b>楼宇智诊</b> · PRODUCT PITCH</div>
+    <div class="grow" style="display:flex; flex-direction:column; justify-content:center;">
+      <div class="kicker">建筑智慧运维 · 立项提案</div>
+      <h1>楼宇智诊<br><span style="color:var(--accent)">建筑运维 AI 助手</span></h1>
+      <p class="lead" style="margin-top:22px; max-width:620px;">
+        让建筑运维从「看数据」进化到「<span style="color:var(--accent-2);font-weight:600;">问数据</span> + 让它<span style="color:var(--accent-2);font-weight:600;">干活</span>」——
+        用一句话，完成 <span style="color:var(--text);font-weight:600;">定位 → 诊断 → 建议 → 派单 → 报告</span> 的闭环。
+      </p>
+      <div style="margin-top:34px; display:flex; gap:14px; flex-wrap:wrap;">
+        <span class="tag cyan">对话式诊断</span>
+        <span class="tag teal">plan-and-execute 编排</span>
+        <span class="tag indigo">IoT MCP 工具生态</span>
+        <span class="tag amber">26 年工程经验 × AI</span>
+      </div>
+    </div>
+    <div class="foot">
+      <span>楼宇智诊 · 产品立项提案</span>
+      <span>Jim · 2026</span>
+    </div>
+    <div class="arrow-hint">⌨ ← → / 空格 翻页 · F 全屏 · 触屏左右滑动 · #页码 直达</div>
+  </section>
+
+  <!-- ============ 2 痛点 ============ -->
+  <section class="slide">
+    <div class="kicker">问题</div>
+    <h2>传统建筑运维，停在「<span class="accent">看数据</span>」</h2>
+    <p class="lead" style="margin-bottom:26px;">系统很多、数据很全，但"看懂 + 决策"仍靠人。三个真实痛点：</p>
+    <div class="grid cols-3 grow">
+      <div class="card rose" style="display:flex; flex-direction:column;">
+        <svg class="ico" width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <circle cx="19" cy="19" r="11" stroke="#fb7185" stroke-width="2"/>
+          <line x1="27" y1="27" x2="36" y2="36" stroke="#fb7185" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M16 16.5 a3.4 3.4 0 0 1 6.6 1.1 c0 2.2-3.2 2.6-3.2 4.6" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="19.4" cy="25.6" r="1.4" fill="#fb7185"/>
+        </svg>
+        <span class="tag rose">痛点 01</span>
+        <h3>看数据 ≠ 会诊断</h3>
+        <p class="sub" style="margin-top:10px; line-height:1.7;">BI 大屏只展示"温度 82°C 越限"，不回答"为什么、是不是真故障、该怎么处理"。诊断仍靠老师傅经验。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--danger); font-weight:600;">影响</span><span class="sub"> · 响应慢 3h+</span>
+        </div>
+      </div>
+      <div class="card amber" style="display:flex; flex-direction:column;">
+        <svg class="ico" width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <path d="M22 8 a9 9 0 0 1 9 9 v6 l3.4 5 H9.6 L13 23 v-6 a9 9 0 0 1 9-9 Z" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M19 32 a3 3 0 0 0 6 0" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+          <path d="M36 12 a12 12 0 0 1 3 7 M8 12 a12 12 0 0 0-3 7" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>
+          <circle cx="33" cy="9" r="4" fill="#fb7185"/>
+        </svg>
+        <span class="tag amber">痛点 02</span>
+        <h3>告警轰炸</h3>
+        <p class="sub" style="margin-top:10px; line-height:1.7;">一台冷水机组故障，连锁触发几十条告警，值班被淹没，分不清根因，真故障被埋没。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--warn); font-weight:600;">影响</span><span class="sub"> · 误报率 >60%</span>
+        </div>
+      </div>
+      <div class="card indigo" style="display:flex; flex-direction:column;">
+        <svg class="ico" width="44" height="44" viewBox="0 0 44 44" fill="none">
+          <circle cx="16" cy="14" r="6" stroke="#818cf8" stroke-width="2"/>
+          <path d="M5 34 a11 11 0 0 1 22 0" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+          <path d="M30 16 l5 5 M35 16 l-5 5" stroke="#fb7185" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M30 30 h9 M30 35 h6" stroke="#818cf8" stroke-width="2" stroke-linecap="round" opacity=".6"/>
+        </svg>
+        <span class="tag indigo">痛点 03</span>
+        <h3>经验断层</h3>
+        <p class="sub" style="margin-top:10px; line-height:1.7;">老专家退休 = 知识带走。新人不会排查、不会看趋势，SOP 躺在手册里没人翻。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-3); font-weight:600;">影响</span><span class="sub"> · 培训 6+ 月</span>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <span class="tag cyan">现状</span>
+      <span class="lead" style="font-size:16px;">物业报修"3 楼会议室太热" → 客服转派 → 工程现场判断 → 数小时甚至隔天才有结论 —— <span style="color:var(--warn);font-weight:600;">响应慢、依赖人、不可沉淀</span>。</span>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>02</span></div>
+  </section>
+
+  <!-- ============ 3 定位 ============ -->
+  <section class="slide">
+    <div class="kicker">定位</div>
+    <h2>从「看数据」到「<span class="accent">问数据 + 让它干活</span>」</h2>
+    <p class="lead" style="margin:18px 0 30px; max-width:860px;">
+      用户用<span style="color:var(--text);font-weight:600;">自然语言</span>描述问题（哪怕只是"太热了"），
+      AI 助手自动完成<span style="color:var(--accent-2);font-weight:600;">定位 → 诊断 → 建议 → 派单 → 报告</span>，全程可解释、可审计。
+    </p>
+    <div class="grid cols-3 grow">
+      <div class="card accent" style="display:flex; flex-direction:column;">
+        <span class="tag cyan">入口</span>
+        <div class="num">01</div>
+        <h3 style="margin-top:10px;">对话式交互</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">不翻手册、不看大屏，直接问。模糊表达也能澄清到具体设备。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent);">→ "3楼太热" → AHU-03</span>
+        </div>
+      </div>
+      <div class="card teal" style="display:flex; flex-direction:column;">
+        <span class="tag teal">内核</span>
+        <div class="num teal">02</div>
+        <h3 style="margin-top:10px;">自动诊断</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">plan-and-execute 鉴别诊断循环：提假设 → 验证 → 换假设 → 下结论。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-2);">→ 假设 → 验证 → 换假设</span>
+        </div>
+      </div>
+      <div class="card indigo" style="display:flex; flex-direction:column;">
+        <span class="tag indigo">闭环</span>
+        <div class="num indigo">03</div>
+        <h3 style="margin-top:10px;">落地派单</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">诊断完一键生成工单（人工确认），从"发现问题"到"处理问题"闭环。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-3);">→ 诊断报告 → 工单自动生成</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>03</span></div>
+  </section>
+
+  <!-- ============ 4 价值主张 ============ -->
+  <section class="slide">
+    <div class="kicker">价值主张</div>
+    <h2>三个视角，都能拿到<span class="accent">可量化</span>的回报</h2>
+    <div class="grid cols-3 grow">
+      <div class="card" style="text-align:center; padding:34px 22px;">
+        <span class="tag teal">对运维 / 工程</span>
+        <div class="stat" style="margin-top:18px;"><b style="color:var(--accent-2);">少跑腿</b><span style="margin-top:10px; display:block;">AI 先诊断，人到场即修，有证据链不怕背锅</span></div>
+      </div>
+      <div class="card" style="text-align:center; padding:34px 22px;">
+        <span class="tag cyan">对管理 / 甲方</span>
+        <div class="stat" style="margin-top:18px;"><b style="color:var(--accent);">降本 + 可审计</b><span style="margin-top:10px; display:block;">报修分钟级响应，无效工单下降，全程留痕</span></div>
+      </div>
+      <div class="card" style="text-align:center; padding:34px 22px;">
+        <span class="tag indigo">对组织 / 知识</span>
+        <div class="stat" style="margin-top:18px;"><b style="color:var(--accent-3);">经验沉淀</b><span style="margin-top:10px; display:block;">老专家排查逻辑编码进系统，新人即战力</span></div>
+      </div>
+    </div>
+    <div class="grid cols-4" style="margin-top:22px;">
+      <div class="card"><span class="tag cyan">效率</span><div class="stat" style="margin-top:8px;"><b>10×</b><span>报告 1h → 30s 初稿</span></div></div>
+      <div class="card"><span class="tag teal">质量</span><div class="stat" style="margin-top:8px;"><b>↓ 误派单</b><span>假告警不再派工</span></div></div>
+      <div class="card"><span class="tag indigo">覆盖</span><div class="stat" style="margin-top:8px;"><b>7×24</b><span>全量设备不间断</span></div></div>
+      <div class="card"><span class="tag amber">合规</span><div class="stat" style="margin-top:8px;"><b>可追溯</b><span>每步有数据依据</span></div></div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>04</span></div>
+  </section>
+
+  <!-- ============ 5 三层架构 ============ -->
+  <section class="slide ambient-layers">
+    <div class="kicker">架构</div>
+    <h2>三层架构：<span class="accent">交互 · 编排 · 接口</span> 相互印证</h2>
+    <p class="sub" style="margin-bottom:4px;">接口层站在开放生态上：MCP 已成 Agent 工具接入事实标准（Anthropic 发布、2025 年捐入 Linux Foundation，OpenAI / Google / 微软均已采纳，生态内 Server 超 1 万个）。</p>
+    <div class="grow" style="display:flex; align-items:center; justify-content:center;">
+      <svg width="100%" height="490" viewBox="0 0 1080 490" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0 0 L8 4.5 L0 9 Z" fill="#38bdf8"/>
+          </marker>
+          <marker id="arr2" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0 0 L8 4.5 L0 9 Z" fill="#2dd4bf"/>
+          </marker>
+        </defs>
+        <!-- L1 -->
+        <g>
+          <rect x="30" y="30" width="1020" height="120" rx="14" fill="#0d1526" stroke="#1e2a44"/>
+          <rect x="30" y="30" width="6" height="120" rx="3" fill="#38bdf8"/>
+          <text x="58" y="60" fill="#38bdf8" font-size="15" font-weight="700">第一层 · 面向用户的交互功能</text>
+          <text x="58" y="84" fill="#8b98b3" font-size="13">对话诊断 · 模糊澄清 · 巡检 · 能碳 · 知识 · 派单 · 报告</text>
+          <g font-size="12" fill="#e6edf7">
+            <rect x="58" y="100" width="92" height="24" rx="12" fill="#111c33" stroke="#1e2a44"/><text x="104" y="116" text-anchor="middle">"太热了"</text>
+            <rect x="160" y="100" width="116" height="24" rx="12" fill="#111c33" stroke="#1e2a44"/><text x="218" y="116" text-anchor="middle">"查一下告警"</text>
+            <rect x="286" y="100" width="116" height="24" rx="12" fill="#111c33" stroke="#1e2a44"/><text x="344" y="116" text-anchor="middle">"帮我诊断"</text>
+            <rect x="412" y="100" width="110" height="24" rx="12" fill="#111c33" stroke="#1e2a44"/><text x="467" y="116" text-anchor="middle">"帮我出报告"</text>
+            <rect x="532" y="100" width="100" height="24" rx="12" fill="#111c33" stroke="#1e2a44"/><text x="582" y="116" text-anchor="middle">"能碳异常"</text>
+          </g>
+        </g>
+        <!-- L2 -->
+        <g>
+          <rect x="30" y="180" width="1020" height="120" rx="14" fill="#0d1526" stroke="#1e2a44"/>
+          <rect x="30" y="180" width="6" height="120" rx="3" fill="#2dd4bf"/>
+          <text x="58" y="210" fill="#2dd4bf" font-size="15" font-weight="700">第二层 · Agent 动态编排推理（LangGraph · plan-and-execute）</text>
+          <text x="58" y="234" fill="#8b98b3" font-size="13">planner 初诊 → executor 开检查单 → replan 复诊换假设 → 高危审批 → 证据链</text>
+          <g font-size="12" fill="#e6edf7">
+            <rect x="58" y="250" width="72" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="94" y="266" text-anchor="middle">planner</text>
+            <rect x="140" y="250" width="76" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="178" y="266" text-anchor="middle">executor</text>
+            <rect x="226" y="250" width="72" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="262" y="266" text-anchor="middle">replan</text>
+            <rect x="308" y="250" width="96" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="356" y="266" text-anchor="middle">高危审批</text>
+            <rect x="414" y="250" width="72" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="450" y="266" text-anchor="middle">证据链</text>
+            <rect x="496" y="250" width="72" height="24" rx="12" fill="#111c33" stroke="#2dd4bf"/><text x="532" y="266" text-anchor="middle">置信度</text>
+          </g>
+        </g>
+        <!-- L3 -->
+        <g>
+          <rect x="30" y="330" width="1020" height="120" rx="14" fill="#0d1526" stroke="#1e2a44"/>
+          <rect x="30" y="330" width="6" height="120" rx="3" fill="#818cf8"/>
+          <text x="58" y="360" fill="#818cf8" font-size="15" font-weight="700">第三层 · 基础接口（IoT 智慧运维基础服务 · MCP）</text>
+          <text x="58" y="384" fill="#8b98b3" font-size="13">空间树 · 设备台账 · 点位/历史 · 告警收敛 · 知识库 · 工单/控制（审批）</text>
+          <g font-size="12" fill="#e6edf7">
+            <rect x="58" y="400" width="100" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="108" y="416" text-anchor="middle">get_space_tree</text>
+            <rect x="168" y="400" width="100" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="218" y="416" text-anchor="middle">list_devices</text>
+            <rect x="278" y="400" width="120" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="338" y="416" text-anchor="middle">query_points</text>
+            <rect x="408" y="400" width="120" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="468" y="416" text-anchor="middle">get_root_alarm</text>
+            <rect x="538" y="400" width="100" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="588" y="416" text-anchor="middle">search_kb</text>
+            <rect x="648" y="400" width="116" height="24" rx="12" fill="#111c33" stroke="#818cf8"/><text x="706" y="416" text-anchor="middle">create_ticket</text>
+          </g>
+        </g>
+        <!-- 双向印证箭头 -->
+        <line x1="540" y1="150" x2="540" y2="180" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#arr)"/>
+        <line x1="560" y1="180" x2="560" y2="150" stroke="#2dd4bf" stroke-width="1.6" marker-end="url(#arr2)"/>
+        <line x1="540" y1="300" x2="540" y2="330" stroke="#2dd4bf" stroke-width="1.6" marker-end="url(#arr)"/>
+        <line x1="560" y1="330" x2="560" y2="300" stroke="#818cf8" stroke-width="1.6" marker-end="url(#arr2)"/>
+        <g font-size="12" fill="#8b98b3">
+          <text x="572" y="158">需要哪些能力？</text>
+          <text x="572" y="176">兑现哪些功能？</text>
+          <text x="572" y="308">依赖哪些接口？</text>
+          <text x="572" y="326">支撑哪些能力？</text>
+        </g>
+        <text x="540" y="478" text-anchor="middle" fill="#2dd4bf" font-size="14" font-weight="600">双向可追溯 = 设计自洽（正向无悬空、反向无冗余）</text>
+      </svg>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>05</span></div>
+  </section>
+
+  <!-- ============ 6 诊断循环 ============ -->
+  <section class="slide ambient-loop">
+    <div class="kicker">核心机制</div>
+    <h2>plan-and-execute：把诊断做成「<span class="accent">鉴别诊断循环</span>」</h2>
+    <p class="lead" style="margin:14px 0 18px; max-width:900px;">老师傅排查故障不是"照清单跑完"，而是<span style="color:var(--text);font-weight:600;">提假设 → 验证 → 证据不符就换假设 → 锁定根因</span>。</p>
+    <div class="grow" style="display:flex; align-items:center; justify-content:center;">
+      <svg width="100%" height="340" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#38bdf8"/></marker>
+        </defs>
+        <g>
+          <rect x="60" y="120" width="200" height="90" rx="14" fill="#0d1526" stroke="#38bdf8" stroke-width="1.4"/>
+          <text x="160" y="157" text-anchor="middle" fill="#38bdf8" font-size="16" font-weight="700">planner · 初诊</text>
+          <text x="160" y="181" text-anchor="middle" fill="#8b98b3" font-size="12">给初始假设 + 排查顺序</text>
+        </g>
+        <g>
+          <rect x="400" y="120" width="200" height="90" rx="14" fill="#0d1526" stroke="#2dd4bf" stroke-width="1.4"/>
+          <text x="500" y="157" text-anchor="middle" fill="#2dd4bf" font-size="16" font-weight="700">executor · 开检查单</text>
+          <text x="500" y="181" text-anchor="middle" fill="#8b98b3" font-size="12">LLM + 只读工具执行第 1 步</text>
+        </g>
+        <g>
+          <rect x="740" y="120" width="200" height="90" rx="14" fill="#0d1526" stroke="#818cf8" stroke-width="1.4"/>
+          <text x="840" y="157" text-anchor="middle" fill="#818cf8" font-size="16" font-weight="700">replan · 复诊</text>
+          <text x="840" y="181" text-anchor="middle" fill="#8b98b3" font-size="12">证据 vs 假设</text>
+        </g>
+        <line x1="260" y1="165" x2="398" y2="165" stroke="#38bdf8" stroke-width="1.6" marker-end="url(#ar3)"/>
+        <line x1="600" y1="165" x2="738" y2="165" stroke="#2dd4bf" stroke-width="1.6" marker-end="url(#ar3)"/>
+        <!-- 回环 -->
+        <path d="M840 120 C 840 48, 500 48, 500 118" fill="none" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#ar3)"/>
+        <text x="620" y="72" fill="#818cf8" font-size="13" text-anchor="middle">证据不足 → 继续 / 证据冲突 → 换假设</text>
+        <!-- 结束 -->
+        <path d="M840 210 C 840 285, 160 285, 160 218" fill="none" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5 5" marker-end="url(#ar3)"/>
+        <text x="500" y="305" fill="#34d399" font-size="13" text-anchor="middle">证据充分 → 下结论（诊断报告）</text>
+        <text x="160" y="105" text-anchor="middle" fill="#8b98b3" font-size="12">关键在「换假设」——这是线性 plan-and-execute 做不到的</text>
+      </svg>
+    </div>
+    <div class="grid cols-3">
+      <div class="card teal"><span class="tag teal">场景 A</span><p class="sub" style="margin-top:6px; line-height:1.6;">温度<strong style="color:var(--warn)">渐进</strong>升高 + 散热告警 → 判定「散热器堵塞」，建议维修</p></div>
+      <div class="card indigo"><span class="tag indigo">场景 B</span><p class="sub" style="margin-top:6px; line-height:1.6;">温度<strong style="color:var(--accent-2)">突变回落</strong> + 其它正常 → 换假设「传感器漂移」，<strong style="color:var(--ok)">不建议派单</strong></p></div>
+      <div class="card"><span class="tag cyan">价值</span><p class="sub" style="margin-top:6px; line-height:1.6;">一次误派工的代价，远超整套 Agent 的搭建成本</p></div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>06</span></div>
+  </section>
+
+  <!-- ============ 7 产品原型 Chat ============ -->
+  <section class="slide">
+    <div class="kicker">产品原型 ①</div>
+    <h2>聊天窗：<span class="accent">叙事流</span>，讲清楚"在查什么、为什么"</h2>
+    <div class="grid cols-2 grow" style="align-items:stretch;">
+      <div class="chat">
+        <div class="head"><span style="color:var(--accent);">◉</span> 楼宇智诊 · 在线</div>
+        <div class="bubble user">3 楼会议室太热了，帮我看看怎么回事</div>
+        <div class="bubble ai"><span class="who">PLANNER · 初诊</span>正在定位"3 楼会议室"的空间与设备，并拟定排查计划…</div>
+        <div class="bubble ai"><span class="who">EXECUTOR · 开检查单</span>已定位到 <code style="color:var(--accent-2)">AHU-03 空调机组</code>，送风温度 28°C（设定 24°C）。</div>
+        <div class="bubble ai"><span class="who">EXECUTOR</span>近 24h 送风温度<strong>渐进上升</strong>，冷冻水阀开度告警，正匹配历史案例…</div>
+        <div class="bubble ai"><span class="who">REPLAN · 复诊</span>结论：<strong>冷冻水阀卡滞</strong>（置信度 92%）。已生成诊断报告 → 见右侧，可一键派单。</div>
+      </div>
+      <div class="card accent" style="display:flex; flex-direction:column;">
+        <span class="tag cyan">设计要点</span>
+        <ul class="sub" style="list-style:none; line-height:2; margin-top:6px;">
+          <li>▸ 用户可用<span style="color:var(--text)">模糊自然语言</span>，Agent 负责澄清到具体设备</li>
+          <li>▸ 每个气泡标注<span style="color:var(--accent-2)">谁在干活</span>（planner/executor/replan），过程透明</li>
+          <li>▸ 推理过程<span style="color:var(--text)">可读</span>，不是黑盒</li>
+          <li>▸ 结论一句话收束，<span style="color:var(--accent)">产物外移到右侧工作台</span></li>
+          <li>▸ 全程留痕，<span style="color:var(--text)">可审计、可复盘</span></li>
+        </ul>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent);">→ 下一页：工作台产物详情</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>07</span></div>
+  </section>
+
+  <!-- ============ 8 产品原型 Workbench ============ -->
+  <section class="slide">
+    <div class="kicker">产品原型 ②</div>
+    <h2>工作台：<span class="accent">产物流</span>，把证据和结论"亮"出来</h2>
+    <div class="grid cols-2 grow" style="align-items:stretch;">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <span class="tag teal">趋势图 · 可缩放</span>
+        <svg width="100%" height="200" viewBox="0 0 460 200" preserveAspectRatio="xMidYMid meet">
+          <line x1="40" y1="20" x2="40" y2="170" class="axis"/>
+          <line x1="40" y1="170" x2="440" y2="170" class="axis"/>
+          <line x1="40" y1="40" x2="440" y2="40" class="gridline"/>
+          <line x1="40" y1="80" x2="440" y2="80" class="gridline"/>
+          <line x1="40" y1="120" x2="440" y2="120" class="gridline"/>
+          <line x1="40" y1="155" x2="440" y2="155" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="5 4"/>
+          <text x="34" y="160" fill="#f59e0b" font-size="11" text-anchor="end">24°C</text>
+          <polyline points="40,130 90,122 140,116 190,106 240,98 290,86 340,72 390,58 440,46" fill="none" stroke="#fb7185" stroke-width="2.4" class="glow-line"/>
+          <circle cx="440" cy="46" r="4.5" fill="#fb7185"/>
+          <text x="240" y="30" fill="#fb7185" font-size="12" text-anchor="middle">送风温度 · 24h 渐进上升（非突变）</text>
+          <text x="42" y="192" fill="#5b6880" font-size="10">00:00</text><text x="432" y="192" fill="#5b6880" font-size="10">24:00</text>
+        </svg>
+        <div style="margin-top:auto; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-2);">关键判据：温度<span style="color:var(--text);font-weight:600;">渐进上升</span>（非突变）→ 排除传感器故障，指向阀卡滞</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card teal">
+          <span class="tag teal">设备卡片</span>
+          <div style="font-size:14px; line-height:1.8;">
+            <div><code>AHU-03</code> 空调机组 · 3楼会议室</div>
+            <div class="sub">送风温度 <span style="color:var(--danger)">28°C</span> ｜ 冷冻水阀开度 <span style="color:var(--warn)">告警</span></div>
+          </div>
+        </div>
+        <div class="card accent">
+          <span class="tag cyan">诊断报告（可导出）</span>
+          <div class="sub" style="line-height:1.75;">
+            <b>根因</b>：冷冻水阀卡滞（置信度 92%）<br>
+            <b>数据依据</b>：温度渐进上升 + 阀开度告警 + 历史案例 #2019-08<br>
+            <b>建议</b>：派单检修冷冻水阀
+          </div>
+        </div>
+        <div class="card" style="text-align:center;"><span style="font-size:14px; color:var(--text);">[ 一键生成工单（人工确认后下发）]</span></div>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>08</span></div>
+  </section>
+
+  <!-- ============ 9 旗舰场景 ============ -->
+  <section class="slide">
+    <div class="kicker">端到端</div>
+    <h2>旗舰场景：<span class="accent">报修 → 诊断 → 派单</span> 全链路</h2>
+    <p class="lead" style="margin:10px 0 14px; max-width:900px;">一句话报修 → <span style="color:var(--accent-2);font-weight:600;">AI 自动</span>完成定位、取证、诊断，<span style="color:var(--text);font-weight:600;">人工只需确认派单</span>。</p>
+    <div class="grow" style="display:flex; flex-direction:column; justify-content:center; gap:16px;">
+      <svg width="100%" height="280" viewBox="0 0 1080 280" preserveAspectRatio="xMidYMid meet">
+        <defs><marker id="ar4" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L8 4.5 L0 9 Z" fill="#38bdf8"/></marker></defs>
+        <!-- 角色标签 -->
+        <g font-size="11" fill="#5b6880" text-anchor="middle">
+          <text x="115" y="56">用户</text>
+          <text x="325" y="56">AI · 自动</text>
+          <text x="535" y="56">AI · 自动</text>
+          <text x="745" y="56">AI · 自动</text>
+          <text x="960" y="56">人工确认</text>
+        </g>
+        <!-- AI 自动覆盖带 -->
+        <rect x="225" y="66" width="625" height="120" rx="14" fill="rgba(45,212,191,.04)" stroke="rgba(45,212,191,.2)" stroke-dasharray="4 4"/>
+        <text x="537" y="84" fill="#2dd4bf" font-size="12" text-anchor="middle" font-weight="600">AI 自动完成 · 秒级</text>
+        <!-- 5 个步骤 -->
+        <g font-size="13" text-anchor="middle">
+          <rect x="30" y="90" width="170" height="80" rx="12" fill="#0d1526" stroke="#38bdf8"/>
+          <text x="115" y="122" fill="#e6edf7" font-weight="600">用户报修</text><text x="115" y="144" fill="#8b98b3" font-size="12">"3楼会议室太热"</text>
+          <rect x="240" y="90" width="170" height="80" rx="12" fill="#0d1526" stroke="#2dd4bf"/>
+          <text x="325" y="122" fill="#e6edf7" font-weight="600">空间下钻</text><text x="325" y="144" fill="#8b98b3" font-size="12">空间 → 设备 AHU-03</text>
+          <rect x="450" y="90" width="170" height="80" rx="12" fill="#0d1526" stroke="#2dd4bf"/>
+          <text x="535" y="122" fill="#e6edf7" font-weight="600">取证诊断</text><text x="535" y="144" fill="#8b98b3" font-size="12">状态/趋势/告警/案例</text>
+          <rect x="660" y="90" width="170" height="80" rx="12" fill="#0d1526" stroke="#818cf8"/>
+          <text x="745" y="122" fill="#e6edf7" font-weight="600">复诊定论</text><text x="745" y="144" fill="#8b98b3" font-size="12">冷冻水阀卡滞 92%</text>
+          <rect x="870" y="90" width="180" height="80" rx="12" fill="#0d1526" stroke="#f59e0b"/>
+          <text x="960" y="122" fill="#e6edf7" font-weight="600">审批派单</text><text x="960" y="144" fill="#8b98b3" font-size="12">人工确认 → 工单</text>
+        </g>
+        <g stroke="#38bdf8" stroke-width="1.6" fill="none">
+          <line x1="200" y1="130" x2="238" y2="130" marker-end="url(#ar4)"/>
+          <line x1="410" y1="130" x2="448" y2="130" marker-end="url(#ar4)"/>
+          <line x1="620" y1="130" x2="658" y2="130" marker-end="url(#ar4)"/>
+          <line x1="830" y1="130" x2="868" y2="130" marker-end="url(#ar4)"/>
+        </g>
+        <!-- 耗时标注 -->
+        <g font-size="11" fill="#2dd4bf" text-anchor="middle">
+          <text x="219" y="106">~3s</text>
+          <text x="429" y="106">~5s</text>
+          <text x="639" y="106">~8s</text>
+          <text x="849" y="106">~2s</text>
+        </g>
+        <!-- 对比现状 -->
+        <g font-size="12" text-anchor="middle">
+          <text x="540" y="210" fill="#34d399">✓ 分钟级：从一句话到有依据的结论 + 派单</text>
+          <text x="540" y="234" fill="#fb7185">✗ 现状：客服转派 → 工程现场判断 → 数小时起步</text>
+          <text x="540" y="262" fill="#5b6880">同一场景，效率提升 10×+，且每步有数据依据</text>
+        </g>
+      </svg>
+      <div class="grid cols-4">
+        <div class="card teal" style="text-align:center; padding:20px 16px;">
+          <span class="tag teal">响应时间</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--accent-2);font-size:28px;">10×↑</b><span style="margin-top:6px; display:block;">数小时 → 分钟级</span></div>
+        </div>
+        <div class="card accent" style="text-align:center; padding:20px 16px;">
+          <span class="tag cyan">人工介入</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--accent);font-size:28px;">仅确认</b><span style="margin-top:6px; display:block;">全程依赖 → 一步确认</span></div>
+        </div>
+        <div class="card indigo" style="text-align:center; padding:20px 16px;">
+          <span class="tag indigo">证据链</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--accent-3);font-size:28px;">完整</b><span style="margin-top:6px; display:block;">无记录 → 全程可追溯</span></div>
+        </div>
+        <div class="card" style="text-align:center; padding:20px 16px; border-color:rgba(245,158,11,.4);">
+          <span class="tag amber">派单准确</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--warn);font-size:28px;">↓ 误派</b><span style="margin-top:6px; display:block;">假告警自动过滤</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>09</span></div>
+  </section>
+
+  <!-- ============ 10 价值论证 ============ -->
+  <section class="slide">
+    <div class="kicker">价值</div>
+    <h2>价值，用<span class="accent">指标</span>说话</h2>
+    <div class="grow" style="display:flex; flex-direction:column; justify-content:center; gap:16px;">
+      <table>
+        <tr><th>价值点</th><th>量化口径</th><th>对应能力</th></tr>
+        <tr><td>报修响应提速</td><td>数小时 → <span style="color:var(--ok)">分钟级初诊</span></td><td><code>对话诊断 + 空间下钻</code></td></tr>
+        <tr><td>无效工单下降</td><td>假告警（传感器漂移）<span style="color:var(--ok)">不派单</span></td><td><code>鉴别诊断循环</code></td></tr>
+        <tr><td>巡检提效提质</td><td>报告 1h → <span style="color:var(--ok)">30s 初稿</span>，漏检率↓</td><td><code>巡检编排 + 证据链</code></td></tr>
+        <tr><td>能碳合规降本</td><td>能耗异常<span style="color:var(--ok)">早发现、早归因</span></td><td><code>多因素归因</code></td></tr>
+        <tr><td>知识沉淀</td><td>老专家经验<span style="color:var(--ok)">数字化</span>，新人即战力</td><td><code>RAG 知识库</code></td></tr>
+      </table>
+      <div class="grid cols-3">
+        <div class="card accent" style="text-align:center; padding:20px;">
+          <span class="tag cyan">响应提速</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--accent);font-size:32px;">10×</b><span style="margin-top:6px; display:block;">数小时 → 分钟级</span></div>
+        </div>
+        <div class="card teal" style="text-align:center; padding:20px;">
+          <span class="tag teal">报告效率</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--accent-2);font-size:32px;">120×</b><span style="margin-top:6px; display:block;">1h → 30s 初稿</span></div>
+        </div>
+        <div class="card" style="text-align:center; padding:20px; border-color:rgba(245,158,11,.4);">
+          <span class="tag amber">误派下降</span>
+          <div class="stat" style="margin-top:10px;"><b style="color:var(--warn);font-size:32px;">↓ 显著</b><span style="margin-top:6px; display:block;">假告警自动过滤</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:0;">
+      <span class="tag teal">差异化</span>
+      <span class="lead" style="font-size:16px;">多数建筑运维还停在"看数据"；纯 AI 团队做不了"排查顺序 / 突变 vs 渐进 / 告警收敛 / 空间下钻"这些<span style="color:var(--text);font-weight:600;">需要真实运维经验</span>的规则。</span>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>10</span></div>
+  </section>
+
+  <!-- ============ 11 市场与格局 ============ -->
+  <section class="slide ambient-market">
+    <div class="kicker">市场与格局</div>
+    <h2>风口之上：<span class="accent">市场够大，空档清晰</span></h2>
+    <div class="grid cols-4" style="margin:16px 0 20px;">
+      <div class="card" style="text-align:center; padding:18px 14px;">
+        <div class="stat"><b style="color:var(--accent);font-size:30px;">8000亿+</b><span style="margin-top:6px; display:block;">中国智慧建筑市场（2026E，IDC）</span></div>
+      </div>
+      <div class="card" style="text-align:center; padding:18px 14px;">
+        <div class="stat"><b style="color:var(--accent-2);font-size:30px;">~18%</b><span style="margin-top:6px; display:block;">行业年复合增长率</span></div>
+      </div>
+      <div class="card" style="text-align:center; padding:18px 14px;">
+        <div class="stat"><b style="color:var(--accent-3);font-size:30px;">$1910亿</b><span style="margin-top:6px; display:block;">全球 BAS 市场（2030E）</span></div>
+      </div>
+      <div class="card" style="text-align:center; padding:18px 14px;">
+        <div class="stat"><b style="color:var(--warn);font-size:30px;">46%+</b><span style="margin-top:6px; display:block;">楼宇厂商近三年已推 AI 运维模块</span></div>
+      </div>
+    </div>
+    <div class="grid cols-2 grow">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <span class="tag indigo">国际大厂 · 设备侧 AI</span>
+        <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.9;">
+          <li>▸ <b style="color:var(--text)">西门子 Building X</b>：规则式故障检测（FDD），联合微软做数字孪生</li>
+          <li>▸ <b style="color:var(--text)">江森 OpenBlue</b>：2026 收购 Nantum AI，强化 HVAC 优化</li>
+          <li>▸ <b style="color:var(--text)">霍尼韦尔 Forge</b>：生成式 AI 故障检测，落地 500+ 楼宇</li>
+        </ul>
+        <div class="grow"></div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-3);">特征：预测性维护 / 能耗优化强，但绑定自家硬件与协议</span>
+        </div>
+      </div>
+      <div class="card" style="display:flex; flex-direction:column;">
+        <span class="tag teal">国内平台 · 集成侧重</span>
+        <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.9;">
+          <li>▸ <b style="color:var(--text)">美的 iBUILDING</b>：5 万+设备接入，故障算法引擎主打预测报警</li>
+          <li>▸ <b style="color:var(--text)">达实 / 特斯联等</b>：项目制集成，平台偏大屏展示与联动控制</li>
+          <li>▸ <b style="color:var(--text)">共同点</b>：交互仍停留在大屏与表单，诊断决策依赖人</li>
+        </ul>
+        <div class="grow"></div>
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--line-soft);">
+          <span class="sub" style="color:var(--accent-2);">特征：「看数据」做得好，「问数据 → 干活」基本空白</span>
+        </div>
+      </div>
+    </div>
+    <div class="card accent" style="margin-top:18px;">
+      <span class="tag cyan">我们的空档</span>
+      <span class="lead" style="font-size:16px;">对话式<span style="color:var(--text);font-weight:600;">鉴别诊断</span> × 跨系统<span style="color:var(--text);font-weight:600;">派单闭环</span> × 中文物业场景 × MCP 开放生态（不绑硬件）—— 大厂没做，集成商做不了。</span>
+      <div class="sub" style="margin-top:10px; font-size:12px;">数据来源：IDC、MarketsandMarkets、观研报告网、各厂商公开资料（2025–2026）</div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>11</span></div>
+  </section>
+
+  <!-- ============ 12 路线图 ============ -->
+  <section class="slide">
+    <div class="kicker">落地</div>
+    <h2>分阶段落地：先打通<span class="accent">一条主线</span></h2>
+    <div class="grow" style="display:flex; flex-direction:column; justify-content:center; gap:18px;">
+      <svg width="100%" height="200" viewBox="0 0 1080 200" preserveAspectRatio="xMidYMid meet">
+        <defs><marker id="ar5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0 0 L8 4.5 L0 9 Z" fill="#38bdf8"/></marker></defs>
+        <line x1="90" y1="100" x2="1010" y2="100" stroke="#1e2a44" stroke-width="2"/>
+        <g font-size="13">
+          <!-- MVP -->
+          <text x="150" y="62" text-anchor="middle" fill="#38bdf8" font-size="11">告警诊断</text>
+          <circle cx="150" cy="100" r="9" fill="#38bdf8"/><text x="150" y="132" text-anchor="middle" fill="#38bdf8" font-weight="700">MVP</text>
+          <text x="150" y="152" text-anchor="middle" fill="#8b98b3" font-size="12">已切片验证</text>
+          <text x="150" y="170" text-anchor="middle" fill="#5b6880" font-size="11">2-4 周</text>
+          <!-- V1 -->
+          <text x="380" y="62" text-anchor="middle" fill="#2dd4bf" font-size="11">下钻 + 派单</text>
+          <circle cx="380" cy="100" r="9" fill="#2dd4bf"/><text x="380" y="132" text-anchor="middle" fill="#2dd4bf" font-weight="700">V1</text>
+          <text x="380" y="152" text-anchor="middle" fill="#8b98b3" font-size="12">空间 + 澄清 + 派单</text>
+          <text x="380" y="170" text-anchor="middle" fill="#5b6880" font-size="11">1-2 月</text>
+          <!-- V2 -->
+          <text x="610" y="62" text-anchor="middle" fill="#818cf8" font-size="11">横向扩展</text>
+          <circle cx="610" cy="100" r="9" fill="#818cf8"/><text x="610" y="132" text-anchor="middle" fill="#818cf8" font-weight="700">V2</text>
+          <text x="610" y="152" text-anchor="middle" fill="#8b98b3" font-size="12">巡检 + 能碳 + 知识</text>
+          <text x="610" y="170" text-anchor="middle" fill="#5b6880" font-size="11">2-3 月</text>
+          <!-- V3 -->
+          <text x="840" y="62" text-anchor="middle" fill="#f59e0b" font-size="11">全量接入</text>
+          <circle cx="840" cy="100" r="9" fill="#f59e0b"/><text x="840" y="132" text-anchor="middle" fill="#f59e0b" font-weight="700">V3</text>
+          <text x="840" y="152" text-anchor="middle" fill="#8b98b3" font-size="12">真实平台 + 全量监控</text>
+          <text x="840" y="170" text-anchor="middle" fill="#5b6880" font-size="11">长期</text>
+          <circle cx="1010" cy="100" r="6" fill="#5b6880"/>
+        </g>
+      </svg>
+      <div class="grid cols-4">
+        <div class="card accent" style="padding:18px 18px;">
+          <span class="tag cyan">MVP · 交付物</span>
+          <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.8;">
+            <li>▸ 告警收敛 + 根因定位</li>
+            <li>▸ plan-and-execute 基础循环</li>
+            <li>▸ Mock 数据验证闭环</li>
+          </ul>
+        </div>
+        <div class="card teal" style="padding:18px 18px;">
+          <span class="tag teal">V1 · 交付物</span>
+          <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.8;">
+            <li>▸ 空间树下钻到具体设备</li>
+            <li>▸ 自然语言模糊澄清</li>
+            <li>▸ 真实工单系统对接</li>
+          </ul>
+        </div>
+        <div class="card indigo" style="padding:18px 18px;">
+          <span class="tag indigo">V2 · 交付物</span>
+          <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.8;">
+            <li>▸ 巡检编排 + 证据链</li>
+            <li>▸ 能碳多因素归因</li>
+            <li>▸ 知识库 RAG + 报告生成</li>
+          </ul>
+        </div>
+        <div class="card" style="padding:18px 18px; border-color:rgba(245,158,11,.4);">
+          <span class="tag amber">V3 · 交付物</span>
+          <ul class="sub" style="list-style:none; margin-top:8px; line-height:1.8;">
+            <li>▸ 全量设备接入</li>
+            <li>▸ 多楼宇 + 主动预警</li>
+            <li>▸ 控制下发（审批后）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="padding:16px 26px;">
+        <span class="tag cyan">原则</span>
+        <span class="lead" style="font-size:15.5px;">先打通 <span style="color:var(--accent-2);font-weight:600;">报修 → 诊断 → 派单</span> 一条主线，最贴近物业日常、最快见 ROI；再横向扩展巡检 / 能碳 / 知识。</span>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>12</span></div>
+  </section>
+
+  <!-- ============ 13 为什么是我们 ============ -->
+  <section class="slide">
+    <div class="kicker">壁垒</div>
+    <h2>为什么是<span class="accent">我们</span>？</h2>
+    <div class="grid cols-3 grow">
+      <div class="card accent" style="display:flex; flex-direction:column;">
+        <div class="num">26</div>
+        <h3 style="margin-top:12px;">年工程经验</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">IoT + 建筑 + 安防 + 企业应用，跨领域理解力是"翻译 + 落地"的底子。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="tag cyan" style="margin-bottom:0;">已落地</span>
+          <p class="sub" style="margin-top:8px; line-height:1.6;">安防分布式平台 · IoT 10万+设备 · 3D家装后台</p>
+        </div>
+      </div>
+      <div class="card teal" style="display:flex; flex-direction:column;">
+        <div class="num teal">×</div>
+        <h3 style="margin-top:12px;">IoT 领域深度</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">设备接入、时序数据、告警链路、巡检机器人、能碳管理——闭着眼能讲清设备数据怎么查、控制怎么下发。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="tag teal" style="margin-bottom:0;">核心能力</span>
+          <p class="sub" style="margin-top:8px; line-height:1.6;">时序数据查询 · 告警收敛 · 空间下钻 · 控制下发</p>
+        </div>
+      </div>
+      <div class="card indigo" style="display:flex; flex-direction:column;">
+        <div class="num indigo">AI</div>
+        <h3 style="margin-top:12px;">AI 落地能力</h3>
+        <p class="sub" style="margin-top:8px; line-height:1.65;">LangGraph + plan-and-execute + MCP，把运维经验编码进编排逻辑，而不是靠 LLM 猜。</p>
+        <div class="grow"></div>
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--line-soft);">
+          <span class="tag indigo" style="margin-bottom:0;">已落地</span>
+          <p class="sub" style="margin-top:8px; line-height:1.6;">RAG知识库 · AI视频流水线 · 能碳管理小程序</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px; text-align:center;">
+      <span class="lead" style="font-size:17px; color:var(--text);">交叉蓝海：<span style="color:var(--accent);font-weight:600;">懂 AI 的人不熟建筑运维，熟建筑运维的人不懂 AI</span> —— 两个都深的，极少。</span>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>13</span></div>
+  </section>
+
+  <!-- ============ 14 结尾 ============ -->
+  <section class="slide end">
+    <div class="grow" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+      <div class="kicker" style="text-align:center;">立项请求</div>
+      <h1 style="font-size:44px;">让建筑运维，<br>从「看数据」到「<span style="color:var(--accent)">问数据 + 让它干活</span>」</h1>
+      <p class="lead" style="margin-top:26px; max-width:640px;">以 MVP「告警诊断」为起点，3 个月打通「报修 → 诊断 → 派单」主线，</p>
+      <p class="lead" style="max-width:640px;">用一套可审计、可沉淀、可扩展的 AI 运维助手，撬动建筑智慧运维的下一个范式。</p>
+      <div style="margin-top:40px; display:flex; gap:14px;">
+        <span class="tag cyan">谢谢</span>
+        <span class="tag teal">期待立项</span>
+      </div>
+    </div>
+    <div class="foot"><span>楼宇智诊 · 产品立项提案</span><span>14</span></div>
+  </section>
+
+</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let cur = 0;
+  const progressEl = document.getElementById('progress');
+  // 为每个 slide 的 foot 动态生成页码圆点
+  slides.forEach((s) => {
+    const foot = s.querySelector('.foot');
+    if (!foot) return;
+    const dotsDiv = document.createElement('div');
+    dotsDiv.className = 'page-dots';
+    slides.forEach((_, i) => {
+      const dot = document.createElement('i');
+      dot.addEventListener('click', (e) => { e.stopPropagation(); show(i); });
+      dotsDiv.appendChild(dot);
+    });
+    foot.insertBefore(dotsDiv, foot.lastElementChild);
+  });
+  function show(i) {
+    cur = (i + slides.length) % slides.length;
+    slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+    slides.forEach(s => {
+      s.querySelectorAll('.page-dots i').forEach((d, k) => d.classList.toggle('on', k === cur));
+    });
+    progressEl.style.width = ((cur + 1) / slides.length * 100) + '%';
+    const h = '#' + (cur + 1);
+    if (location.hash !== h) history.replaceState(null, '', h);
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(cur + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') show(cur - 1);
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      else document.documentElement.requestFullscreen?.();
+    }
+  });
+  // 触屏左右滑动翻页
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) show(cur + (dx < 0 ? 1 : -1));
+    touchX = null;
+  }, { passive: true });
+  // #页码 深链（可分享/刷新保持当前页）
+  window.addEventListener('hashchange', () => {
+    const n = parseInt(location.hash.slice(1), 10);
+    if (n >= 1 && n <= slides.length && n - 1 !== cur) show(n - 1);
+  });
+  document.addEventListener('click', e => {
+    if (e.clientX > window.innerWidth * 0.72) show(cur + 1);
+    else if (e.clientX < window.innerWidth * 0.28) show(cur - 1);
+  });
+  // 初始页：支持 #5 直达第 5 页
+  const initN = parseInt((location.hash || '').slice(1), 10);
+  show(initN >= 1 && initN <= slides.length ? initN - 1 : 0);
+</script>
+</body>
+</html>

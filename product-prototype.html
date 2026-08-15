@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>楼宇智诊 · 产品原型（对话 × 工作台 融合版）</title>
+<meta name="description" content="楼宇智诊：建筑智慧运维 AI 助手产品原型 —— 对话式诊断 × 实时工作台，plan-and-execute 编排，报修到派单全链路演示。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d1526'/%3E%3Cpath d='M7 25 V12 h6 v13 M15 25 V7 h7 v18 M24 25 v-9 h4 v9' stroke='%2338bdf8' stroke-width='2' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M6 28 h20' stroke='%232dd4bf' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#070b16; --panel:#0d1526; --panel2:#111c33; --line:#1e2a44; --line-soft:#16203a;
+    --text:#e6edf7; --sub:#8b98b3; --dim:#5b6880;
+    --cyan:#38bdf8; --teal:#2dd4bf; --indigo:#818cf8; --amber:#f59e0b; --rose:#fb7185; --ok:#34d399;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+    font-size:14px; overflow:hidden;
+  }
+  code{font-family:"JetBrains Mono",Consolas,monospace; font-size:12.5px; background:var(--panel2); border:1px solid var(--line); border-radius:4px; padding:1px 6px; color:var(--cyan);}
+
+  /* ============ 顶栏 ============ */
+  .appbar{
+    height:52px; display:flex; align-items:center; gap:16px; padding:0 20px;
+    background:linear-gradient(180deg,#0d1526,#0a1122); border-bottom:1px solid var(--line);
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;}
+  .logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--indigo));display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .crumb{color:var(--dim);font-size:12.5px;}
+  .crumb b{color:var(--sub);font-weight:600;}
+  .appbar .sp{flex:1;}
+  .btn{
+    border:1px solid var(--line); background:var(--panel2); color:var(--text);
+    padding:7px 16px; border-radius:8px; cursor:pointer; font-size:13px; transition:.15s;
+  }
+  .btn:hover{border-color:var(--cyan); color:var(--cyan);}
+  .btn.primary{background:linear-gradient(135deg,#0ea5e9,#0891b2); border:none; color:#fff; font-weight:600;}
+  .btn.primary:hover{filter:brightness(1.15); color:#fff;}
+
+  /* ============ 主区域 ============ */
+  .app{position:relative; display:flex; height:calc(100vh - 52px - 34px); overflow:hidden;}
+
+  /* ---- 左：对话面板 ---- */
+  .chat-panel{
+    width:400px; min-width:360px; display:flex; flex-direction:column;
+    background:var(--panel); border-right:1px solid var(--line);
+  }
+  .chat-head{
+    padding:12px 16px; border-bottom:1px solid var(--line-soft);
+    display:flex; align-items:center; gap:8px; font-size:13px;
+  }
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);}
+  .chat-head .t{font-weight:600;}
+  .chat-head .hint{margin-left:auto;color:var(--dim);font-size:11.5px;}
+  .msgs{flex:1; overflow-y:auto; padding:16px 14px; display:flex; flex-direction:column; gap:14px;}
+  .msgs::-webkit-scrollbar{width:6px;} .msgs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  .msg{display:flex; gap:10px; opacity:0; transform:translateY(10px); transition:.4s; cursor:pointer; border-radius:10px; padding:6px 8px; margin:-6px -8px;}
+  .msg.show{opacity:1; transform:none;}
+  .msg:hover{background:rgba(56,189,248,.06);}
+  .msg.active{background:rgba(56,189,248,.1); box-shadow:inset 0 0 0 1px rgba(56,189,248,.35);}
+  .avatar{
+    width:30px;height:30px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--c,var(--cyan));background:var(--panel2);
+  }
+  .msg.user .avatar{color:#fff;background:linear-gradient(135deg,#334155,#1e293b);}
+  .m-body{min-width:0;flex:1;}
+  .who{font-size:10.5px;letter-spacing:.5px;color:var(--c,var(--cyan));font-weight:700;margin-bottom:4px;}
+  .m-text{
+    background:var(--panel2); border:1px solid var(--line); border-radius:4px 12px 12px 12px;
+    padding:9px 12px; line-height:1.65; color:var(--text); font-size:13px;
+  }
+  .msg.user .m-text{background:linear-gradient(135deg,#0e7490,#155e75); border-color:#164e63; border-radius:12px 4px 12px 12px;}
+  .m-text .hl{color:var(--teal);font-weight:600;}
+  .m-text .ref{
+    display:inline-flex;align-items:center;gap:4px;color:var(--cyan);cursor:pointer;
+    border-bottom:1px dashed rgba(56,189,248,.5); padding:0 1px;
+  }
+  .m-text .ref:hover{color:#7dd3fc;}
+  .m-foot{margin-top:6px;font-size:11px;color:var(--dim);display:flex;gap:10px;}
+  .typing{display:inline-flex;gap:4px;padding:4px 2px;}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--sub);animation:tp 1s infinite;}
+  .typing i:nth-child(2){animation-delay:.15s;} .typing i:nth-child(3){animation-delay:.3s;}
+  @keyframes tp{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+
+  .chat-input{
+    border-top:1px solid var(--line-soft); padding:12px 14px; display:flex; gap:8px;
+  }
+  .chat-input input{
+    flex:1; background:var(--panel2); border:1px solid var(--line); border-radius:9px;
+    padding:10px 12px; color:var(--text); font-size:13px; outline:none;
+  }
+  .chat-input input:focus{border-color:var(--cyan);}
+  .chat-input button{
+    border:none; background:linear-gradient(135deg,#0ea5e9,#0891b2); color:#fff; font-weight:600;
+    border-radius:9px; padding:0 18px; cursor:pointer; font-size:13px;
+  }
+
+  /* ---- 右：工作台 ---- */
+  .workbench{flex:1; position:relative; overflow:hidden; padding:14px; background:
+    radial-gradient(1000px 500px at 70% -10%, rgba(56,189,248,.06), transparent),
+    radial-gradient(800px 400px at 100% 100%, rgba(129,140,248,.05), transparent);}
+  .wb-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+  .wb-title{font-weight:700;font-size:15px;}
+  .legend{margin-left:auto;display:flex;align-items:center;gap:14px;font-size:11.5px;color:var(--dim);}
+  .legend i{display:inline-block;width:18px;height:2px;border-radius:2px;vertical-align:middle;margin-right:5px;}
+
+  .wb-grid{display:grid; grid-template-columns:minmax(420px,1.5fr) minmax(260px,1fr); grid-auto-rows:min-content; gap:12px;}
+
+  /* 卡片（产物） */
+  .artifact{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:14px 16px; position:relative; transition:border-color .3s, box-shadow .3s, opacity .4s;
+  }
+  .artifact.pending{opacity:.35; filter:grayscale(.8);}
+  .artifact.linked{border-color:var(--lc,var(--cyan)); box-shadow:0 0 0 1px var(--lc,var(--cyan)), 0 0 22px -4px var(--lc,var(--cyan));}
+  .art-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.5px;padding:3px 10px;border-radius:99px;border:1px solid;}
+  .tag.cyan{color:var(--cyan);border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.08);}
+  .tag.teal{color:var(--teal);border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.08);}
+  .tag.amber{color:var(--amber);border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.08);}
+  .tag.rose{color:var(--rose);border-color:rgba(251,113,133,.4);background:rgba(251,113,133,.08);}
+  .tag.indigo{color:var(--indigo);border-color:rgba(129,140,248,.4);background:rgba(129,140,248,.08);}
+  .src{margin-left:auto;font-size:10.5px;color:var(--dim);display:flex;align-items:center;gap:4px;opacity:0;transition:.4s;}
+  .artifact.activated .src{opacity:1;color:var(--lc,var(--cyan));}
+
+  /* 设备卡片 + KPI */
+  .dev-row{display:flex;gap:12px;}
+  .dev-main{flex:1;}
+  .dev-name{font-size:15px;font-weight:700;}
+  .dev-name code{margin-right:8px;}
+  .dev-sub{color:var(--sub);font-size:12px;margin-top:4px;}
+  .kpis{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:11px;color:var(--sub);}
+  .kpi b{display:block;font-size:15px;margin-top:2px;color:var(--text);font-weight:700;}
+  .kpi b.bad{color:var(--rose);} .kpi b.warn{color:var(--amber);}
+  .dev-state{align-self:center;text-align:center;padding:0 6px;}
+  .dev-state .st{width:44px;height:44px;border-radius:50%;border:2px solid var(--amber);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--amber);margin:0 auto 6px;background:rgba(245,158,11,.08);}
+  .dev-state .s{font-size:10.5px;color:var(--dim);}
+
+  /* 趋势图 */
+  .tabs{display:flex;gap:6px;margin-left:auto;}
+  .tab{font-size:11.5px;color:var(--sub);padding:4px 12px;border-radius:99px;border:1px solid var(--line);cursor:pointer;transition:.15s;}
+  .tab:hover{color:var(--text);}
+  .tab.on{color:var(--cyan);border-color:rgba(56,189,248,.5);background:rgba(56,189,248,.08);}
+  .chart-wrap{position:relative;}
+  .chart-note{margin-top:8px;padding-top:10px;border-top:1px dashed var(--line-soft);font-size:12px;color:var(--sub);line-height:1.6;}
+  .chart-note b{color:var(--text);}
+  .chart-line{stroke-dasharray:1200;stroke-dashoffset:1200;transition:stroke-dashoffset 1.6s ease;}
+  .chart-line.drawn{stroke-dashoffset:0;}
+
+  /* 告警列表 */
+  .al{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px;}
+  .al:last-child{border-bottom:none;}
+  .al .lv{flex:none;font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:1px;}
+  .al .lv.root{color:#fff;background:var(--rose);}
+  .al .lv.d{color:var(--dim);border:1px solid var(--line);}
+  .al .tx{color:var(--sub);line-height:1.55;}
+  .al.root-al .tx{color:var(--text);}
+  .al .fold{margin-left:auto;flex:none;color:var(--dim);font-size:10.5px;}
+
+  /* 案例库 */
+  .case-item{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.7;color:var(--sub);}
+  .case-item b{color:var(--text);}
+  .case-sim{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .simbar{flex:1;height:5px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .simbar i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--teal),var(--cyan));transition:width 1s .3s;}
+
+  /* ============ 浮动窗口 ============ */
+  .float-win{
+    position:absolute; width:380px; background:rgba(13,21,38,.97); backdrop-filter:blur(6px);
+    border:1px solid var(--line); border-radius:14px; box-shadow:0 18px 50px -12px rgba(0,0,0,.6);
+    opacity:0; transform:scale(.94) translateY(12px); transition:.35s; z-index:30; overflow:hidden;
+  }
+  .float-win.open{opacity:1; transform:none;}
+  .float-win.linked{border-color:var(--lc);box-shadow:0 0 0 1px var(--lc),0 18px 50px -12px rgba(0,0,0,.6);}
+  .fw-bar{
+    display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line-soft);
+    cursor:grab; user-select:none; background:rgba(17,28,51,.6);
+  }
+  .fw-bar:active{cursor:grabbing;}
+  .fw-dots{display:flex;gap:5px;}
+  .fw-dots i{width:9px;height:9px;border-radius:50%;}
+  .fw-title{font-size:12.5px;font-weight:600;color:var(--sub);}
+  .fw-x{margin-left:auto;color:var(--dim);cursor:pointer;font-size:15px;line-height:1;padding:0 4px;}
+  .fw-x:hover{color:var(--rose);}
+  .fw-body{padding:14px 16px;max-height:380px;overflow:auto;}
+  .fw-body::-webkit-scrollbar{width:6px;}.fw-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+
+  /* 报告 */
+  .rep-concl{background:linear-gradient(135deg,rgba(56,189,248,.1),rgba(129,140,248,.08));border:1px solid rgba(56,189,248,.3);border-radius:10px;padding:12px 14px;}
+  .rep-concl .r{font-size:15px;font-weight:700;}
+  .rep-concl .conf{color:var(--teal);}
+  .evi{margin-top:12px;}
+  .evi .e{display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed var(--line-soft);font-size:12.5px;color:var(--sub);cursor:pointer;border-radius:6px;}
+  .evi .e:hover{color:var(--text);}
+  .evi .e:last-child{border-bottom:none;}
+  .evi .n{flex:none;width:18px;height:18px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--cyan);margin-top:1px;}
+  .fw-actions{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line-soft);}
+  .fw-actions .btn{flex:1;text-align:center;padding:8px 0;}
+
+  /* 工单 */
+  .wo-field{display:flex;font-size:12.5px;padding:6px 0;border-bottom:1px dashed var(--line-soft);}
+  .wo-field .k{width:72px;color:var(--dim);flex:none;}
+  .wo-field .v{color:var(--text);}
+  .wo-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;}
+  .wo-status.pend{color:var(--amber);} .wo-status.done{color:var(--ok);}
+
+  /* ============ 状态栏 ============ */
+  .statusbar{
+    height:34px; display:flex; align-items:center; gap:18px; padding:0 18px;
+    background:var(--panel); border-top:1px solid var(--line); font-size:11.5px; color:var(--dim);
+  }
+  .agent-state{display:flex;align-items:center;gap:8px;}
+  .agent-state .pulse{width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pl 1.2s infinite;}
+  @keyframes pl{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,.5)}50%{box-shadow:0 0 0 5px rgba(56,189,248,0)}}
+  #stateText{color:var(--sub);}
+  .statusbar .sp{flex:1;}
+
+  /* 连线层 */
+  #overlay{position:absolute;inset:0;pointer-events:none;z-index:25;}
+  .lk{fill:none;stroke-width:1.8;opacity:.85;stroke-dasharray:6 5;animation:mv 1s linear infinite;}
+  @keyframes mv{to{stroke-dashoffset:-11;}}
+
+  /* 窄屏适配：对话在上、工作台在下，可滚动 */
+  @media (max-width: 980px){
+    body{overflow:auto;}
+    .app{flex-direction:column; height:auto; overflow:visible;}
+    .chat-panel{width:100%; min-width:0; height:54vh; border-right:none; border-bottom:1px solid var(--line);}
+    .workbench{overflow:visible;}
+    .wb-grid{grid-template-columns:1fr;}
+    .float-win{position:fixed; width:min(380px, 92vw);}
+  }
+
+  /* toast */
+  #toast{
+    position:fixed;bottom:50px;right:24px;background:var(--panel2);border:1px solid rgba(52,211,153,.4);
+    color:var(--ok);padding:11px 18px;border-radius:10px;font-size:13px;z-index:99;
+    opacity:0;transform:translateY(10px);transition:.3s;box-shadow:0 10px 30px rgba(0,0,0,.5);
+  }
+  #toast.show{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <div class="logo"><span class="mark"><svg width="16" height="16" viewBox="0 0 32 32" fill="none"><path d="M7 25 V12 h6 v13 M15 25 V7 h7 v18 M24 25 v-9 h4 v9" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/><path d="M5 28 h22" stroke="#fff" stroke-width="2.4" stroke-linecap="round" opacity=".7"/></svg></span>楼宇智诊 <span style="font-size:11px;color:var(--dim);font-weight:400;">SmartBuilding Diagnoser</span></div>
+  <div class="crumb">演示项目 <b>张江·AI创新园</b> / 楼栋 A / 3F / 会议室-01</div>
+  <div class="sp"></div>
+  <button class="btn" id="btnPause" title="空格：暂停 / 继续">⏸ 暂停</button>
+  <button class="btn" id="btnNext" title="→：单步推进（自动转手动模式）">⏭ 下一步</button>
+  <button class="btn" id="btnReplay" title="R：重播演示">⟳ 重播演示</button>
+  <button class="btn primary" id="btnFull" title="F：全屏">全屏</button>
+</div>
+
+<div class="app" id="app">
+
+  <!-- 左：对话 -->
+  <aside class="chat-panel">
+    <div class="chat-head"><span class="dot"></span><span class="t">诊断对话 · AHU-03 会话</span><span class="hint">点击消息可高亮其产物</span></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="chat-input">
+      <input id="chatIn" placeholder="试试：“3楼会议室太热了” / “查一下今天的告警”">
+      <button onclick="fakeSend()">发送</button>
+    </div>
+  </aside>
+
+  <!-- 右：工作台 -->
+  <section class="workbench" id="wb">
+    <div class="wb-head">
+      <span class="wb-title">诊断工作台</span>
+      <span style="font-size:11.5px;color:var(--dim);">Agent 产物随对话实时生成</span>
+      <div class="legend">
+        <span><i style="background:var(--cyan)"></i>PLANNER</span>
+        <span><i style="background:var(--teal)"></i>EXECUTOR</span>
+        <span><i style="background:var(--indigo)"></i>REPLAN</span>
+        <span><i style="background:var(--amber)"></i>人工确认</span>
+      </div>
+    </div>
+
+    <div class="wb-grid">
+      <!-- 设备卡片 -->
+      <div class="artifact pending" id="art-dev" data-owner="PLANNER">
+        <div class="art-head">
+          <span class="tag cyan">① 设备卡片 · 空间下钻</span>
+          <span class="src">◉ 由 PLANNER 定位</span>
+        </div>
+        <div class="dev-row">
+          <div class="dev-main">
+            <div class="dev-name"><code>AHU-03</code>空调机组（组合式）</div>
+            <div class="dev-sub">A 栋 / 3F / 会议室-01 供区 ｜ 投运 2021-06 ｜ 上次保养 45 天前</div>
+            <div class="kpis">
+              <div class="kpi">送风温度<b class="bad">28.0°C</b></div>
+              <div class="kpi">送风设定<b>24.0°C</b></div>
+              <div class="kpi">冷冻水阀开度<b class="warn">12% ↘</b></div>
+              <div class="kpi">回风温度<b class="warn">27.5°C</b></div>
+            </div>
+          </div>
+          <div class="dev-state"><div class="st">告警</div><div class="s">运行中</div></div>
+        </div>
+      </div>
+
+      <!-- 告警收敛 -->
+      <div class="artifact pending" id="art-alarm" data-owner="EXECUTOR·步3" style="grid-row:span 2;">
+        <div class="art-head">
+          <span class="tag rose">③ 告警收敛 · 根因链</span>
+          <span class="src">◉ EXECUTOR·步3</span>
+        </div>
+        <div class="al root-al"><span class="lv root">根因</span><span class="tx"><b>冷冻水阀阀位反馈偏差</b>（设定 65% / 实际 12%，持续 3.2h）</span></div>
+        <div class="al"><span class="lv d">派生</span><span class="tx">送风温度高超限（28.0°C > 26°C）</span></div>
+        <div class="al"><span class="lv d">派生</span><span class="tx">回风温度偏高（27.5°C）</span></div>
+        <div class="al"><span class="lv d">派生</span><span class="tx">会议室体感过热投诉（工单来源）</span></div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-soft);font-size:12px;color:var(--sub);">
+          4 条告警收敛为 <b style="color:var(--text)">1 条根因</b>，抑制派生告警派单
+        </div>
+      </div>
+
+      <!-- 趋势图 -->
+      <div class="artifact pending" id="art-trend" data-owner="EXECUTOR·步2">
+        <div class="art-head">
+          <span class="tag teal">② 趋势取证 · 24h</span>
+          <div class="tabs" id="trendTabs">
+            <span class="tab on" data-t="supply">送风温度</span>
+            <span class="tab" data-t="valve">阀开度</span>
+            <span class="tab" data-t="compare">对比正常机组</span>
+          </div>
+          <span class="src">◉ EXECUTOR·步2</span>
+        </div>
+        <div class="chart-wrap">
+          <svg id="chart" width="100%" height="190" viewBox="0 0 640 190" preserveAspectRatio="none"></svg>
+          <div class="chart-note" id="chartNote"></div>
+        </div>
+      </div>
+
+      <!-- 案例库 -->
+      <div class="artifact pending" id="art-case" data-owner="EXECUTOR·步4">
+        <div class="art-head">
+          <span class="tag indigo">④ 历史案例匹配</span>
+          <span class="src">◉ EXECUTOR·步4</span>
+        </div>
+        <div class="case-item">
+          <div class="case-sim"><span style="font-size:11px;color:var(--dim);">相似度</span><div class="simbar"><i id="simFill"></i></div><b id="simVal" style="color:var(--teal);">0%</b></div>
+          <b>#2019-08 某科技园 AHU-2</b> ｜ 同样「温度渐进↑ + 阀位偏差 + 温差小」<br>
+          处理：派单检修 → <b>阀体卡滞，清洗后恢复</b> ｜ 用时 1.5h
+        </div>
+      </div>
+    </div>
+
+    <!-- 浮窗：诊断报告 -->
+    <div class="float-win" id="win-report" style="right:22px; top:110px;">
+      <div class="fw-bar" data-drag>
+        <div class="fw-dots"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i></div>
+        <span class="fw-title">诊断报告 · AHU-03（可拖拽）</span>
+        <span class="fw-x" onclick="closeWin('win-report')">×</span>
+      </div>
+      <div class="fw-body">
+        <div class="rep-concl">
+          <div class="r">根因：冷冻水阀卡滞 <span class="conf">置信度 92%</span></div>
+          <div style="font-size:12px;color:var(--sub);margin-top:4px;">排除：传感器漂移（温度渐进而非突变）· 冷量不足（邻机组正常）</div>
+        </div>
+        <div class="evi">
+          <div class="e" onclick="flash('art-trend')"><span class="n">1</span><span>送风温度 24h <b>渐进上升</b>，非突变 → <span style="color:var(--cyan)">查看趋势 ↗</span></span></div>
+          <div class="e" onclick="flash('art-alarm')"><span class="n">2</span><span>阀位反馈偏差 53%，持续 3.2h → <span style="color:var(--cyan)">告警链 ↗</span></span></div>
+          <div class="e" onclick="flash('art-case')"><span class="n">3</span><span>历史案例 #2019-08 相似度 87% → <span style="color:var(--cyan)">案例 ↗</span></span></div>
+        </div>
+      </div>
+      <div class="fw-actions">
+        <button class="btn" onclick="toast('报告已导出（模拟）')">导出 PDF</button>
+        <button class="btn primary" onclick="openWO()">生成工单（人工确认）</button>
+      </div>
+    </div>
+
+    <!-- 浮窗：工单 -->
+    <div class="float-win" id="win-wo" style="right:60px; top:200px; width:340px;">
+      <div class="fw-bar" data-drag>
+        <div class="fw-dots"><i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i></div>
+        <span class="fw-title">工单草稿 · WO-2026-0814-01</span>
+        <span class="fw-x" onclick="closeWin('win-wo')">×</span>
+      </div>
+      <div class="fw-body">
+        <div class="wo-field"><span class="k">设备</span><span class="v"><code>AHU-03</code> 空调机组 · 3F 会议室-01</span></div>
+        <div class="wo-field"><span class="k">类型</span><span class="v">维修 · 冷冻水阀 suspected 卡滞</span></div>
+        <div class="wo-field"><span class="k">优先级</span><span class="v" style="color:var(--amber);">高（影响会议室使用）</span></div>
+        <div class="wo-field"><span class="k">处理人</span><span class="v">张工 · 暖通组（值班）</span></div>
+        <div class="wo-field"><span class="k">附件</span><span class="v">诊断报告 · 证据链 3 条 · 案例参考</span></div>
+        <div style="margin-top:12px;">
+          <span class="wo-status pend" id="woStatus">⏳ 待人工确认</span>
+        </div>
+      </div>
+      <div class="fw-actions">
+        <button class="btn" onclick="closeWin('win-wo')">取消</button>
+        <button class="btn primary" id="btnApprove" onclick="approveWO()">批准下发</button>
+      </div>
+    </div>
+
+    <svg id="overlay"></svg>
+  </section>
+</div>
+
+<div class="statusbar">
+  <div class="agent-state"><span class="pulse" id="pulse"></span><span id="stateText">就绪 · 等待用户输入</span></div>
+  <div class="sp"></div>
+  <span id="metrics">会话开始 · 工具调用 0 次 · 用时 0s</span>
+  <span>⚠ 高危操作（控制/派单）需人工确认</span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ================= 演示脚本（消息 → 产物 → 连线） ================= */
+const C = {cyan:'#38bdf8', teal:'#2dd4bf', indigo:'#818cf8', amber:'#f59e0b', rose:'#fb7185', ok:'#34d399', gray:'#8b98b3'};
+
+const steps = [
+  { who:'用户', av:'客', color:'#e2e8f0', user:true, state:'接收报修',
+    text:'3 楼会议室太热了，帮我看看怎么回事', arts:[] , delay:600},
+  { who:'PLANNER · 初诊', av:'P', color:C.cyan, state:'PLANNER 拟定 4 步排查计划',
+    text:'已定位空间「A栋-3F-会议室-01」，供区设备 <span class="hl">AHU-03 空调机组</span>。拟定排查计划：<b>① 空间下钻定位设备 → ② 取 24h 趋势 → ③ 告警收敛 → ④ 匹配历史案例</b>',
+    arts:['art-dev'], delay:2600, tabs:'步骤 1/4', tc:2, sec:8},
+  { who:'EXECUTOR · 步骤 2/4', av:'E', color:C.teal, state:'EXECUTOR 取证中 · query_points(24h)',
+    text:'送风温度 <b>28.0°C</b>（设定 24°C），近 24h <span class="hl">渐进上升</span>，无突变 → <span class="ref" onclick="flash(\'art-trend\',\''+C.teal+'\')">查看趋势图 ↗</span>',
+    arts:['art-trend'], delay:2600, tc:4, sec:18, after:()=>drawChart(currentTab,true)},
+  { who:'EXECUTOR · 步骤 3/4', av:'E', color:C.teal, state:'EXECUTOR · get_root_alarm()',
+    text:'收敛 4 条告警为 <b>1 条根因</b>：<span class="hl">冷冻水阀阀位反馈偏差</span>（设定 65% / 实际 12%）→ <span class="ref" onclick="flash(\'art-alarm\',\''+C.teal+'\')">查看告警链 ↗</span>',
+    arts:['art-alarm'], delay:2400, tc:6, sec:27},
+  { who:'EXECUTOR · 步骤 4/4', av:'E', color:C.teal, state:'EXECUTOR · search_cases()',
+    text:'匹配历史案例 <span class="hl">#2019-08（相似度 87%）</span>：同症状，实锤阀体卡滞 → <span class="ref" onclick="flash(\'art-case\',\''+C.teal+'\')">查看案例 ↗</span>',
+    arts:['art-case'], delay:2400, tc:9, sec:36, after:()=>{ document.getElementById('simFill').style.width='87%'; document.getElementById('simVal').textContent='87%'; }},
+  { who:'REPLAN · 复诊', av:'R', color:C.indigo, state:'REPLAN 证据比对 · 换假设检验',
+    text:'初诊假设「传感器漂移」<b>被证据否定</b>（漂移应为突变，实际渐进）→ 换假设「冷冻水阀卡滞」，全部证据吻合。结论：<span class="hl">冷冻水阀卡滞（置信度 92%）</span>，诊断报告已生成 → <span class="ref" onclick="flashWin(\'win-report\',\''+C.indigo+'\')">查看报告 ↗</span>',
+    arts:['__report'], delay:2600, tc:9, sec:40, after:()=>openWin('win-report')},
+  { who:'系统', av:'✓', color:C.amber, state:'等待人工确认派单',
+    text:'诊断完成：全程 <b>42s · 工具调用 9 次</b>。证据链完整可审计。下一步：人工确认后一键派单（<span style="color:var(--amber)">高危操作需确认</span>）',
+    arts:[], delay:1200, after:()=>{ updateMetrics(9,42,true); }},
+];
+
+let cur = -1, timer = null, paused = false;
+const msgsEl = document.getElementById('msgs');
+
+function addMsg(s, idx){
+  const d = document.createElement('div');
+  d.className = 'msg' + (s.user?' user':'');
+  d.dataset.idx = idx;
+  d.style.setProperty('--c', s.color);
+  d.innerHTML = `<div class="avatar" style="--c:${s.color}">${s.av}</div>
+    <div class="m-body"><div class="who">${s.who}</div><div class="m-text">${s.text}</div>
+    ${s.tabs?`<div class="m-foot"><span>${s.tabs}</span></div>`:''}</div>`;
+  d.onclick = ()=> highlightStep(idx);
+  msgsEl.appendChild(d);
+  requestAnimationFrame(()=> d.classList.add('show'));
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  return d;
+}
+
+function activate(id, color){
+  if(id === '__report'){ openWin('win-report'); return; }
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('pending');
+  el.classList.add('activated');
+  el.style.setProperty('--lc', color);
+}
+
+function flash(id, color){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.style.setProperty('--lc', color||C.cyan);
+  el.classList.add('linked');
+  setTimeout(()=> el.classList.remove('linked'), 1600);
+  el.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function flashWin(id, color){
+  openWin(id);
+  const el = document.getElementById(id);
+  el.style.setProperty('--lc', color||C.cyan);
+  el.classList.add('linked');
+  setTimeout(()=> el.classList.remove('linked'), 1600);
+}
+
+/* 连线：消息 → 产物 */
+function drawLinks(msgEl, ids, color){
+  const ov = document.getElementById('overlay');
+  const wb = document.getElementById('wb');
+  ov.setAttribute('viewBox', `0 0 ${wb.clientWidth} ${wb.clientHeight}`);
+  ov.innerHTML = '';
+  const mr = msgEl.getBoundingClientRect(), wr = wb.getBoundingClientRect();
+  const x1 = mr.right - wr.left, y1 = mr.top + mr.height/2 - wr.top;
+  ids.forEach(id=>{
+    let el = id==='__report' ? document.getElementById('win-report') : document.getElementById(id);
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    const x2 = r.left - wr.left, y2 = r.top + r.height/2 - wr.top;
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    const mx = (x1+x2)/2;
+    p.setAttribute('d', `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`);
+    p.setAttribute('class','lk');
+    p.setAttribute('stroke', color);
+    ov.appendChild(p);
+  });
+  clearTimeout(ov._t);
+  ov._t = setTimeout(()=> ov.innerHTML='', 2400);
+}
+
+function highlightStep(idx){
+  document.querySelectorAll('.msg').forEach(m=>m.classList.toggle('active', +m.dataset.idx===idx));
+  const s = steps[idx]; if(!s) return;
+  const msgEl = msgsEl.children[idx];
+  s.arts.forEach(a=> flash(a, s.color));
+  drawLinks(msgEl, s.arts, s.color);
+}
+
+function step(){
+  cur++;
+  if(cur >= steps.length){ setState('演示完成 · 可点击消息回溯产物关联', C.ok); return; }
+  const s = steps[cur];
+  setState(s.state, s.color);
+  const el = addMsg(s, cur);
+  if(s.tc) updateMetrics(s.tc, s.sec||0);
+  s.arts.forEach(a=> activate(a, s.color));
+  if(s.after) setTimeout(s.after, 300);
+  if(s.arts.length) setTimeout(()=>{ drawLinks(el, s.arts, s.color); s.arts.forEach(a=>{ if(a!=='__report') flash(a, s.color); }); }, 350);
+  if(!paused) timer = setTimeout(step, s.delay);
+}
+
+function setState(t, c){
+  document.getElementById('stateText').textContent = t;
+  document.getElementById('pulse').style.background = c||C.cyan;
+}
+function updateMetrics(tc, sec, done){
+  const el = document.getElementById('metrics');
+  if(!tc){ el.textContent = '会话开始 · 工具调用 0 次 · 用时 0s'; return; }
+  el.textContent = `${done ? '诊断完成' : '诊断中'} · 工具调用 ${tc} 次 · 用时 ${sec}s`;
+}
+
+/* ================= 播放控制（暂停 / 继续 / 单步） ================= */
+function pauseDemo(){
+  if(paused) return;
+  paused = true;
+  clearTimeout(timer);
+  document.getElementById('btnPause').textContent = '▶ 继续';
+  setState('已暂停 · 空格继续 / → 单步推进', C.amber);
+}
+function resumeDemo(){
+  if(!paused) return;
+  paused = false;
+  document.getElementById('btnPause').textContent = '⏸ 暂停';
+  if(cur < steps.length) timer = setTimeout(step, 250);
+}
+function togglePause(){ paused ? resumeDemo() : pauseDemo(); }
+function nextStep(){
+  if(!paused) pauseDemo();          // 首次单步：自动切手动模式
+  if(cur >= steps.length) return;   // 已播完
+  step();
+}
+
+function replay(){
+  clearTimeout(timer);
+  paused = false;
+  document.getElementById('btnPause').textContent = '⏸ 暂停';
+  cur = -1; msgsEl.innerHTML = '';
+  document.getElementById('overlay').innerHTML = '';
+  ['art-dev','art-trend','art-alarm','art-case'].forEach(id=>{ const e=document.getElementById(id); e.classList.add('pending'); e.classList.remove('activated'); });
+  document.getElementById('simFill').style.width='0';
+  document.getElementById('simVal').textContent='0%';
+  closeWin('win-report'); closeWin('win-wo');
+  resetWO();
+  updateMetrics(0,0);
+  drawChart(currentTab, false);
+  step();
+}
+
+/* ================= 浮窗 ================= */
+function openWin(id){ document.getElementById(id).classList.add('open'); }
+function closeWin(id){ document.getElementById(id).classList.remove('open'); }
+function openWO(){ openWin('win-wo'); flashWin('win-report'); }
+function approveWO(){
+  const st = document.getElementById('woStatus');
+  st.className = 'wo-status done';
+  st.textContent = '✓ 已下发 · 张工已接单（模拟）';
+  document.getElementById('btnApprove').textContent = '已下发';
+  document.getElementById('btnApprove').disabled = true;
+  setState('工单已下发 · 闭环完成（报修→诊断→派单）', C.ok);
+  toast('工单 WO-2026-0814-01 已下发（模拟）');
+}
+function resetWO(){
+  const st = document.getElementById('woStatus');
+  st.className = 'wo-status pend'; st.textContent = '⏳ 待人工确认';
+  const b = document.getElementById('btnApprove');
+  b.textContent = '批准下发'; b.disabled = false;
+}
+
+/* 拖拽 */
+document.querySelectorAll('[data-drag]').forEach(bar=>{
+  const win = bar.parentElement;
+  let sx, sy, ox, oy, drag=false;
+  bar.addEventListener('pointerdown', e=>{
+    if(e.target.classList.contains('fw-x')) return;
+    drag = true; sx=e.clientX; sy=e.clientY;
+    const r = win.getBoundingClientRect(), p = win.offsetParent.getBoundingClientRect();
+    ox = r.left-p.left; oy = r.top-p.top;
+    win.style.right='auto'; win.style.left=ox+'px'; win.style.top=oy+'px';
+    bar.setPointerCapture(e.pointerId);
+  });
+  bar.addEventListener('pointermove', e=>{
+    if(!drag) return;
+    win.style.left = Math.max(0, Math.min(ox+e.clientX-sx, win.offsetParent.clientWidth-80))+'px';
+    win.style.top  = Math.max(0, Math.min(oy+e.clientY-sy, win.offsetParent.clientHeight-60))+'px';
+  });
+  bar.addEventListener('pointerup', ()=> drag=false);
+});
+
+/* ================= 趋势图 ================= */
+const chartData = {
+  supply:{ note:'关键判据：温度<b>渐进上升</b>（24h 内 24.2→28.0°C，无阶跃）→ <b>排除传感器漂移</b>（漂移通常为突变），指向机械类故障。',
+    lines:[{pts:'up', color:'#fb7185', name:'送风温度', thr:{y:60,v:'26°C 越限'}}] },
+  valve:{ note:'关键判据：阀开度反馈 <b>3:00 起偏离设定</b>（设定 65% / 反馈跌至 12%）→ 阀位反馈偏差 = <b>根因告警</b>。',
+    lines:[{pts:'valveSet', color:'#8b98b3', name:'设定开度', dash:'5 4'},{pts:'valveAct', color:'#f59e0b', name:'实际反馈'}] },
+  compare:{ note:'横向对比：邻区 <b>AHU-04 同冷源运行正常</b> → 排除「冷量不足」，锁定 AHU-03 本体（阀）故障。',
+    lines:[{pts:'up', color:'#fb7185', name:'AHU-03 送风'},{pts:'norm', color:'#34d399', name:'AHU-04（正常）'}] },
+};
+let currentTab = 'supply';
+const P = {
+  up:      '50,120 100,118 150,113 200,108 250,100 300,92 350,80 400,68 450,55 500,48 550,44 600,42',
+  norm:    '50,128 100,127 150,128 200,127 250,128 300,127 350,128 400,127 450,128 500,127 550,128 600,128',
+  valveSet:'50,70 100,70 150,70 200,70 250,70 300,70 350,70 400,70 450,70 500,70 550,70 600,70',
+  valveAct:'50,74 100,72 150,73 200,110 250,130 300,142 350,150 400,155 450,158 500,159 550,158 600,159',
+};
+function drawChart(tab, animate){
+  const svg = document.getElementById('chart');
+  const d = chartData[tab];
+  let g = `<line x1="40" y1="15" x2="620" y2="15" stroke="#16203a"/><line x1="40" y1="60" x2="620" y2="60" stroke="#16203a"/><line x1="40" y1="105" x2="620" y2="105" stroke="#16203a"/><line x1="40" y1="150" x2="620" y2="150" stroke="#16203a"/>
+  <line x1="40" y1="15" x2="40" y2="165" stroke="#1e2a44"/><line x1="40" y1="165" x2="620" y2="165" stroke="#1e2a44"/>
+  <text x="34" y="168" fill="#5b6880" font-size="10" text-anchor="end">00:00</text><text x="612" y="180" fill="#5b6880" font-size="10">24:00</text>`;
+  d.lines.forEach(l=>{
+    g += `<polyline class="chart-line${animate?' drawn':''}" points="${P[l.pts]}" fill="none" stroke="${l.color}" stroke-width="2.2" ${l.dash?`stroke-dasharray="${l.dash}"`:''}/>`;
+    if(l.thr) g += `<line x1="40" y1="${l.thr.y}" x2="620" y2="${l.thr.y}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5 4"/><text x="620" y="${l.thr.y-4}" fill="#f59e0b" font-size="10" text-anchor="end">${l.thr.v}</text>`;
+  });
+  const lx = 460;
+  d.lines.forEach((l,i)=>{ g += `<rect x="${lx}" y="${8+i*18}" width="8" height="3" rx="1.5" fill="${l.color}"/><text x="${lx+14}" y="${13+i*18}" fill="#8b98b3" font-size="10.5">${l.name}</text>`; });
+  svg.innerHTML = g;
+  document.getElementById('chartNote').innerHTML = d.note;
+  if(!animate) svg.querySelectorAll('.chart-line').forEach(el=> el.classList.remove('drawn'));
+}
+document.getElementById('trendTabs').addEventListener('click', e=>{
+  const t = e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('#trendTabs .tab').forEach(x=>x.classList.toggle('on', x===t));
+  currentTab = t.dataset.t;
+  drawChart(currentTab, true);
+  flash('art-trend', C.teal);
+});
+
+/* ================= 其他 ================= */
+function toast(t){
+  const el = document.getElementById('toast');
+  el.textContent = '✓ ' + t; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=> el.classList.remove('show'), 2600);
+}
+function fakeSend(){
+  const inp = document.getElementById('chatIn');
+  const v = inp.value.trim(); if(!v) return;
+  const d = document.createElement('div');
+  d.className = 'msg user show';
+  d.innerHTML = `<div class="avatar" style="--c:#e2e8f0">客</div><div class="m-body"><div class="who">用户</div><div class="m-text">${v.replace(/</g,'&lt;')}</div></div>`;
+  msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight;
+  inp.value = '';
+  setState('演示模式：请点击「重播演示」查看完整链路', C.cyan);
+}
+document.getElementById('btnReplay').onclick = replay;
+document.getElementById('btnPause').onclick = togglePause;
+document.getElementById('btnNext').onclick = nextStep;
+document.getElementById('btnFull').onclick = ()=>{
+  if(document.fullscreenElement) document.exitFullscreen?.();
+  else document.documentElement.requestFullscreen?.();
+};
+/* 键盘快捷键：空格 暂停/继续 · → 单步 · R 重播 · F 全屏 */
+document.addEventListener('keydown', e=>{
+  const tag = (document.activeElement && document.activeElement.tagName) || '';
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;   // 输入框打字时不劫持
+  if(e.key === ' '){ e.preventDefault(); togglePause(); }
+  else if(e.key === 'ArrowRight'){ e.preventDefault(); nextStep(); }
+  else if(e.key === 'r' || e.key === 'R'){ replay(); }
+  else if(e.key === 'f' || e.key === 'F'){
+    if(document.fullscreenElement) document.exitFullscreen?.();
+    else document.documentElement.requestFullscreen?.();
+  }
+});
+window.addEventListener('resize', ()=>{
+  const ov = document.getElementById('overlay');
+  const wb = document.getElementById('wb');
+  ov.setAttribute('viewBox', `0 0 ${wb.clientWidth} ${wb.clientHeight}`);
+});
+
+drawChart('supply', false);
+setTimeout(replay, 500);
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="lh" cx=".5" cy=".45" r=".7">
+      <stop offset="0" stop-color="#111c33"/>
+      <stop offset="1" stop-color="#070b14"/>
+    </radialGradient>
+    <filter id="lg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="plate1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12203c"/><stop offset="1" stop-color="#0b1322"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#lh)"/>
+
+  <!-- 等距三层堆叠 -->
+  <g transform="translate(800,470)" filter="url(#lg)">
+    <!-- L3 底层：接口 -->
+    <g>
+      <path d="M0 150 L360 60 L0 -30 L-360 60 Z" fill="url(#plate1)" stroke="#818cf8" stroke-width="2" opacity=".9"/>
+      <path d="M0 150 L360 60 L360 78 L0 168 Z" fill="#0a1120" stroke="#818cf8" stroke-width="1" opacity=".8"/>
+      <path d="M0 150 L-360 60 L-360 78 L0 168 Z" fill="#0d1730" stroke="#818cf8" stroke-width="1" opacity=".8"/>
+      <circle cx="-120" cy="58" r="7" fill="#818cf8"/>
+      <circle cx="0" cy="88" r="7" fill="#818cf8"/>
+      <circle cx="120" cy="58" r="7" fill="#818cf8"/>
+    </g>
+    <!-- L2 中层：编排 -->
+    <g transform="translate(0,-130)">
+      <path d="M0 150 L330 55 L0 -40 L-330 55 Z" fill="url(#plate1)" stroke="#2dd4bf" stroke-width="2" opacity=".92"/>
+      <path d="M0 150 L330 55 L330 73 L0 168 Z" fill="#0a1120" stroke="#2dd4bf" stroke-width="1" opacity=".8"/>
+      <path d="M0 150 L-330 55 L-330 73 L0 168 Z" fill="#0d1730" stroke="#2dd4bf" stroke-width="1" opacity=".8"/>
+      <!-- 循环箭头 -->
+      <path d="M-90 62 A 100 42 0 1 1 88 56" fill="none" stroke="#2dd4bf" stroke-width="2.4" stroke-dasharray="8 6"/>
+      <path d="M96 44 L104 62 L82 62 Z" fill="#2dd4bf" transform="translate(-4,-4)"/>
+      <circle cx="0" cy="30" r="9" fill="#2dd4bf"/>
+    </g>
+    <!-- L1 顶层：交互 -->
+    <g transform="translate(0,-260)">
+      <path d="M0 150 L300 50 L0 -50 L-300 50 Z" fill="url(#plate1)" stroke="#38bdf8" stroke-width="2" opacity=".95"/>
+      <path d="M0 150 L300 50 L300 68 L0 168 Z" fill="#0a1120" stroke="#38bdf8" stroke-width="1" opacity=".8"/>
+      <path d="M0 150 L-300 50 L-300 68 L0 168 Z" fill="#0d1730" stroke="#38bdf8" stroke-width="1" opacity=".8"/>
+      <!-- 对话气泡 -->
+      <g transform="translate(-40,18)">
+        <rect x="-70" y="-34" width="150" height="52" rx="14" fill="#0d1a30" stroke="#38bdf8" stroke-width="1.8"/>
+        <path d="M-30 18 L-38 38 L-12 18 Z" fill="#0d1a30" stroke="#38bdf8" stroke-width="1.8"/>
+        <circle cx="-40" cy="-8" r="5" fill="#38bdf8"/>
+        <circle cx="-14" cy="-8" r="5" fill="#38bdf8" opacity=".7"/>
+        <circle cx="12" cy="-8" r="5" fill="#38bdf8" opacity=".45"/>
+      </g>
+    </g>
+    <!-- 层间光柱 -->
+    <g stroke-linecap="round" opacity=".6">
+      <line x1="0" y1="60" x2="0" y2="-20" stroke="#818cf8" stroke-width="2" stroke-dasharray="3 6"/>
+      <line x1="0" y1="-70" x2="0" y2="-150" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="3 6"/>
+    </g>
+  </g>
+
+  <!-- 四周散布的微元素 -->
+  <g opacity=".4" stroke="#2a3d63" fill="none">
+    <rect x="180" y="180" width="60" height="60" rx="10"/>
+    <circle cx="1420" cy="220" r="34"/>
+    <rect x="1330" y="620" width="70" height="70" rx="12"/>
+    <circle cx="240" cy="660" r="26"/>
+  </g>
+  <g fill="#38bdf8" opacity=".45" filter="url(#lg)">
+    <circle cx="210" cy="210" r="4"/>
+    <circle cx="1420" cy="220" r="5"/>
+    <circle cx="1365" cy="655" r="4"/>
+    <circle cx="240" cy="660" r="4"/>
+  </g>
+</svg>

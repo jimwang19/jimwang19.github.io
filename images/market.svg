@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="mh" cx=".78" cy=".6" r=".7">
+      <stop offset="0" stop-color="#101b32"/>
+      <stop offset="1" stop-color="#070b14"/>
+    </radialGradient>
+    <filter id="mg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="bar1" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#0e7490" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#38bdf8" stop-opacity=".75"/>
+    </linearGradient>
+    <linearGradient id="bar2" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#134e4a" stop-opacity=".25"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity=".75"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#mh)"/>
+
+  <!-- 右侧上升柱状图意象 -->
+  <g transform="translate(880,180)" filter="url(#mg)">
+    <g stroke="#1e2a44" stroke-width="1">
+      <line x1="0" y1="560" x2="620" y2="560"/>
+      <line x1="0" y1="420" x2="620" y2="420" opacity=".5"/>
+      <line x1="0" y1="280" x2="620" y2="280" opacity=".5"/>
+      <line x1="0" y1="140" x2="620" y2="140" opacity=".5"/>
+    </g>
+    <rect x="30"  y="430" width="72" height="130" rx="6" fill="url(#bar1)" opacity=".55"/>
+    <rect x="140" y="370" width="72" height="190" rx="6" fill="url(#bar1)" opacity=".65"/>
+    <rect x="250" y="300" width="72" height="260" rx="6" fill="url(#bar2)" opacity=".7"/>
+    <rect x="360" y="210" width="72" height="350" rx="6" fill="url(#bar2)" opacity=".8"/>
+    <rect x="470" y="100" width="72" height="460" rx="6" fill="url(#bar1)"/>
+    <!-- 趋势线 -->
+    <path d="M66 420 C 200 380, 300 300, 396 200 S 500 110, 540 84"
+          fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+    <path d="M540 108 L540 66 M540 108 L576 100" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" transform="translate(-6,-16)"/>
+    <circle cx="540" cy="84" r="7" fill="#38bdf8"/>
+    <!-- 上升粒子 -->
+    <g fill="#2dd4bf" opacity=".6">
+      <circle cx="200" cy="330" r="4"/><circle cx="320" cy="240" r="3.4"/><circle cx="450" cy="150" r="4"/>
+    </g>
+  </g>
+
+  <!-- 左上同心圆雷达意象 -->
+  <g transform="translate(230,220)" opacity=".55" filter="url(#mg)">
+    <circle r="120" fill="none" stroke="#1e2a44" stroke-width="1.2"/>
+    <circle r="80" fill="none" stroke="#1e2a44" stroke-width="1.2"/>
+    <circle r="40" fill="none" stroke="#1e2a44" stroke-width="1.2"/>
+    <line x1="0" y1="0" x2="84" y2="-84" stroke="#38bdf8" stroke-width="1.6" opacity=".8"/>
+    <circle cx="58" cy="-58" r="5" fill="#38bdf8"/>
+    <circle cx="-30" cy="62" r="4" fill="#2dd4bf"/>
+    <circle cx="70" cy="30" r="3.4" fill="#818cf8"/>
+  </g>
+
+  <!-- 散布粒子 -->
+  <g fill="#818cf8" opacity=".4">
+    <circle cx="560" cy="120" r="2.4"/><circle cx="120" cy="560" r="2"/><circle cx="480" cy="760" r="2.4"/>
+    <circle cx="1520" cy="120" r="2"/><circle cx="700" cy="820" r="2"/>
+  </g>
+</svg>

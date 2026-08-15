@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="lp" cx=".62" cy=".5" r=".65">
+      <stop offset="0" stop-color="#101a30"/>
+      <stop offset="1" stop-color="#070b14"/>
+    </radialGradient>
+    <filter id="pg" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset=".5" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#818cf8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#lp)"/>
+
+  <g transform="translate(980,450)" filter="url(#pg)">
+    <!-- 外环轨道 -->
+    <circle r="300" fill="none" stroke="#1e2a44" stroke-width="1.4"/>
+    <circle r="228" fill="none" stroke="#16213a" stroke-width="1" stroke-dasharray="2 8"/>
+    <!-- 主循环弧 -->
+    <path d="M 0 -228 A 228 228 0 1 1 -197.5 114 A 228 228 0 0 1 0 -228"
+          fill="none" stroke="url(#ring)" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>
+    <!-- 循环箭头 -->
+    <path d="M -6 -252 L 26 -226 L -10 -206 Z" fill="#38bdf8" transform="rotate(6 0 -228)"/>
+    <!-- 三个节点：planner / executor / replan -->
+    <g>
+      <circle cx="0" cy="-228" r="17" fill="#0d1526" stroke="#38bdf8" stroke-width="2.4"/>
+      <circle cx="0" cy="-228" r="6" fill="#38bdf8"/>
+      <circle cx="197.5" cy="114" r="17" fill="#0d1526" stroke="#2dd4bf" stroke-width="2.4"/>
+      <circle cx="197.5" cy="114" r="6" fill="#2dd4bf"/>
+      <circle cx="-197.5" cy="114" r="17" fill="#0d1526" stroke="#818cf8" stroke-width="2.4"/>
+      <circle cx="-197.5" cy="114" r="6" fill="#818cf8"/>
+    </g>
+    <!-- 中心：假设/验证 -->
+    <circle r="74" fill="#0d1526" stroke="#2a3d63" stroke-width="1.6"/>
+    <circle r="74" fill="none" stroke="#38bdf8" stroke-width="1" opacity=".35" stroke-dasharray="4 7"/>
+    <g stroke="#38bdf8" stroke-width="2.4" fill="none" opacity=".9">
+      <path d="M -26 -8 L -6 12 L 30 -20"/>
+    </g>
+    <circle cx="0" cy="34" r="4" fill="#2dd4bf"/>
+    <!-- 外环上的卫星点 -->
+    <g fill="#38bdf8" opacity=".7">
+      <circle cx="300" cy="0" r="5"/>
+      <circle cx="-300" cy="0" r="5" fill="#818cf8"/>
+      <circle cx="0" cy="300" r="5" fill="#2dd4bf"/>
+      <circle cx="212" cy="-212" r="4"/>
+      <circle cx="-212" cy="-212" r="4" fill="#818cf8"/>
+    </g>
+    <!-- 轨道连接线 -->
+    <g stroke="#2a3d63" stroke-width="1" opacity=".7">
+      <line x1="300" y1="0" x2="228" y2="0"/>
+      <line x1="-300" y1="0" x2="-228" y2="0"/>
+      <line x1="0" y1="300" x2="0" y2="228"/>
+    </g>
+  </g>
+
+  <!-- 左侧脉冲波形（趋势数据意象） -->
+  <g transform="translate(0,690)" filter="url(#pg)">
+    <polyline points="60,40 160,40 200,-10 250,70 300,20 380,20 420,-30 470,50 540,10 620,10"
+              fill="none" stroke="#2dd4bf" stroke-width="2.4" opacity=".75"/>
+    <polyline points="60,90 200,90 260,60 330,100 430,70 540,95 620,80"
+              fill="none" stroke="#38bdf8" stroke-width="1.6" opacity=".4"/>
+  </g>
+
+  <!-- 散布粒子 -->
+  <g fill="#38bdf8" opacity=".45">
+    <circle cx="140" cy="160" r="2.4"/><circle cx="360" cy="300" r="2"/><circle cx="220" cy="520" r="2.4"/>
+    <circle cx="1500" cy="180" r="2.4"/><circle cx="1420" cy="740" r="2"/><circle cx="560" cy="140" r="2"/>
+  </g>
+</svg>
